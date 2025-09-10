@@ -26,6 +26,13 @@ export interface ETLState {
   isExecuting: boolean;
   executionHistory: ETLExecution[];
 
+  pagination: {
+    currentPage: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+  };
+
   formData: {
     tipoETL: TipoETL;
     entidade: TipoEntidade;
@@ -49,8 +56,11 @@ export interface ETLState {
   limparErro: () => void;
   resetForm: () => void;
   addToHistory: (execution: ETLExecution) => void;
-  loadExecutionHistory: () => Promise<void>;
+  loadExecutionHistory: (page?: number) => Promise<void>;
   refreshHistory: () => Promise<void>;
+  goToPage: (page: number) => Promise<void>;
+  nextPage: () => Promise<void>;
+  previousPage: () => Promise<void>;
 }
 
 export type ETLFormData = ETLState['formData'];
@@ -66,6 +76,13 @@ export const useETLStore = create<ETLState>()(devtools(
   (set, get) => ({
     isExecuting: false,
     executionHistory: [],
+    // Adicionar estado inicial de paginação
+    pagination: {
+      currentPage: 1,
+      pageSize: 20,
+      totalCount: 0,
+      totalPages: 0
+    },
     formData: initialFormData,
     loading: false,
     error: null,
@@ -232,12 +249,15 @@ export const useETLStore = create<ETLState>()(devtools(
       set({ formData: initialFormData }, false, 'resetForm');
     },
 
-    loadExecutionHistory: async () => {
+    loadExecutionHistory: async (page?: number) => {
+      const state = get();
+      const currentPage = page || state.pagination.currentPage;
+      const pageSize = state.pagination.pageSize;
+
       set({ historyLoading: true }, false, 'loadExecutionHistory/start');
 
       try {
-        const response = await executionHistoryService.getPagedExecutions(1, 50);
-
+        const response = await executionHistoryService.getPagedExecutions(currentPage, pageSize);
 
         const backendExecutions = response.executions || [];
 
@@ -280,14 +300,14 @@ export const useETLStore = create<ETLState>()(devtools(
           };
         });
 
-
-        const sortedExecutions = frontendExecutions.sort((a, b) =>
-          new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-        );
-
-
         set({
-          executionHistory: sortedExecutions,
+          executionHistory: frontendExecutions,
+          pagination: {
+            currentPage: response.page || currentPage,
+            pageSize: response.pageSize || pageSize,
+            totalCount: response.totalCount || 0,
+            totalPages: response.totalPages || 0
+          },
           historyLoading: false
         }, false, 'loadExecutionHistory/success');
 
@@ -298,19 +318,30 @@ export const useETLStore = create<ETLState>()(devtools(
     },
 
     refreshHistory: async () => {
-      await get().loadExecutionHistory();
+      const state = get();
+      await get().loadExecutionHistory(state.pagination.currentPage);
     },
 
-    addToHistory: (execution) => {
-      set((state) => {
-        const updatedHistory = [execution, ...state.executionHistory]
-          .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
-          .slice(0, 50);
+    goToPage: async (page: number) => {
+      await get().loadExecutionHistory(page);
+    },
 
-        return {
-          executionHistory: updatedHistory
-        };
-      }, false, 'addToHistory');
+    nextPage: async () => {
+      const state = get();
+      if (state.pagination.currentPage < state.pagination.totalPages) {
+        await get().loadExecutionHistory(state.pagination.currentPage + 1);
+      }
+    },
+
+    previousPage: async () => {
+      const state = get();
+      if (state.pagination.currentPage > 1) {
+        await get().loadExecutionHistory(state.pagination.currentPage - 1);
+      }
+    },
+
+    addToHistory: () => {
+      get().loadExecutionHistory(1);
     },
 
   }),
@@ -326,6 +357,7 @@ export const useETLStore = create<ETLState>()(devtools(
 export const useETLSelectors = {
   isExecuting: () => useETLStore((state) => state.isExecuting),
   executionHistory: () => useETLStore((state) => state.executionHistory),
+  pagination: () => useETLStore((state) => state.pagination),
   formData: () => useETLStore((state) => state.formData),
   loading: () => useETLStore((state) => state.loading),
   error: () => useETLStore((state) => state.error),

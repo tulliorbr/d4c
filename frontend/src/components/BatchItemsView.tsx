@@ -234,10 +234,12 @@ export const BatchItemsView: React.FC<BatchItemsViewProps> = ({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t"
+              className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t"
             >
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Status</label>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Status
+                </label>
                 <select
                   value={filters.status || ""}
                   onChange={(e) => handleFilterChange("status", e.target.value)}
@@ -249,39 +251,6 @@ export const BatchItemsView: React.FC<BatchItemsViewProps> = ({
                   <option value="Processando">Processando</option>
                   <option value="Aviso">Aviso</option>
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Operação
-                </label>
-                <select
-                  value={filters.operacao || ""}
-                  onChange={(e) =>
-                    handleFilterChange("operacao", e.target.value)
-                  }
-                  className="w-full px-3 py-2 bg-background text-foreground border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                >
-                  <option value="">Todas as operações</option>
-                  <option value="Transformacao">Transformação</option>
-                  <option value="Validacao">Validação</option>
-                  <option value="Insercao">Inserção</option>
-                  <option value="Atualizacao">Atualização</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Página</label>
-                <input
-                  type="number"
-                  placeholder="Filtrar por página"
-                  value={filters.page || ""}
-                  onChange={(e) =>
-                    handleFilterChange("page", parseInt(e.target.value) || 1)
-                  }
-                  className="w-full px-3 py-2 bg-background text-foreground border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent placeholder:text-muted-foreground"
-                  min="1"
-                />
               </div>
 
               <div>

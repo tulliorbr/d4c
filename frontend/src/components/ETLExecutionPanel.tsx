@@ -71,13 +71,13 @@ const ETLExecutionPanel: React.FC<ETLExecutionPanelProps> = ({
     {
       id: "movimentos",
       title: "Entidade de Movimentos",
-      description: "Executa ETL para movimentos financeiros",
+      description: "Executa entidade de movimentos financeiros",
       color: "bg-blue-500 hover:bg-blue-600",
     },
     {
       id: "categorias",
       title: "Entidade de Categorias",
-      description: "Executa ETL para categorias",
+      description: "Executa entidade de categorias",
       color: "bg-green-500 hover:bg-green-600",
     },
     {

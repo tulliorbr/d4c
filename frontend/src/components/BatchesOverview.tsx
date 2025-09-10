@@ -231,8 +231,7 @@ export const BatchesOverview: React.FC<BatchesOverviewProps> = ({
                 >
                   <option value="">Todas as entidades</option>
                   <option value="Categorias">Categorias</option>
-                  <option value="Movimentos">Movimentos</option>
-                  <option value="Produtos">Produtos</option>
+                  <option value="MovimentosFinanceiros">Movimentos</option>
                 </select>
               </div>
 

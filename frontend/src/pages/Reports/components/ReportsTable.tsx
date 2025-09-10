@@ -3,10 +3,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
-  ArrowUp,
-  ArrowDown,
   AlertCircle,
-  ArrowUpDown,
 } from "lucide-react";
 import { MovimentoResumo } from "../../../types";
 import {
@@ -47,7 +44,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   itemsPerPage,
   onSort,
   onPageChange,
-  onItemsPerPageChange,
 }) => {
   const [sortField, setSortField] = useState<SortField>("nCodTitulo");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -61,13 +57,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     setSortField(field);
     setSortDirection(newDirection);
     onSort?.(field, newDirection);
-  };
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField === field) {
-      return sortDirection === "asc" ? <ArrowUp /> : <ArrowDown />;
-    }
-    return <ArrowUpDown />;
   };
 
   const handlePageChange = (page: number) => {
@@ -117,24 +106,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 : "registros encontrados"}
             </p>
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-muted-foreground">
-                Itens por página:
-              </label>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => onItemsPerPageChange?.(Number(e.target.value))}
-                className="px-3 py-1 border border-border rounded text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
-          </div>
         </div>
       </CardHeader>
 
@@ -160,7 +131,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 >
                   <div className="flex items-center space-x-1">
                     <span>Código Título</span>
-                    {getSortIcon("nCodTitulo")}
                   </div>
                 </th>
                 <th
@@ -169,7 +139,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 >
                   <div className="flex items-center space-x-1">
                     <span>Data Vencimento</span>
-                    {getSortIcon("dDtVenc")}
                   </div>
                 </th>
 
@@ -179,7 +148,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 >
                   <div className="flex items-center space-x-1">
                     <span>Natureza</span>
-                    {getSortIcon("cNatureza")}
                   </div>
                 </th>
                 <th
@@ -188,7 +156,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 >
                   <div className="flex items-center space-x-1">
                     <span>Status</span>
-                    {getSortIcon("cStatus")}
                   </div>
                 </th>
                 <th
@@ -197,7 +164,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 >
                   <div className="flex items-center space-x-1">
                     <span>Categoria</span>
-                    {getSortIcon("descricaoCategoria")}
                   </div>
                 </th>
                 <th
@@ -206,7 +172,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 >
                   <div className="flex items-center space-x-1">
                     <span>Valor</span>
-                    {getSortIcon("nValorTitulo")}
                   </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">

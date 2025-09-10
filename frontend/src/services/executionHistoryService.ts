@@ -4,7 +4,7 @@ import type { ExecutionHistory } from '../types/domain';
 export interface ExecutionHistoryResponse {
   data: ExecutionHistory[];
   executions: ExecutionHistory[];
-  total: number;
+  totalCount: number;
   page: number;
   pageSize: number;
   totalPages: number;
