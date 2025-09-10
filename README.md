@@ -65,13 +65,6 @@ npm install
 
 ```
 
-Ou se preferir usar pnpm:
-
-```
-
-pnpm install
-
-```
 
 Executar o frontend
 
@@ -81,13 +74,6 @@ npm run dev
 
 ```
 
-Ou com pnpm:
-
-```
-
-pnpm dev
-
-```
 
 O frontend estará disponível em: http://localhost:5173
 
