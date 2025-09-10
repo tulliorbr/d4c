@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// Tipos para o domínio da aplicação
 
-// Enums
 export enum ETLStatus {
   PENDING = 'Pendente',
   RUNNING = 'Executando',
@@ -33,7 +31,6 @@ export enum TipoEntidade {
   CATEGORIAS = 'categorias'
 }
 
-// Interfaces para componentes
 export interface NavigationItem {
   id: string;
   label: string;
@@ -83,7 +80,6 @@ export interface TableProps<T = any> {
   onSort?: (key: keyof T, direction: 'asc' | 'desc') => void;
 }
 
-// Estados da aplicação
 export interface ETLState {
   isExecuting: boolean;
   lastExecution?: {
@@ -155,7 +151,6 @@ export interface Notification {
   autoClose?: boolean;
 }
 
-// Tipos para formulários
 export interface ETLFormData {
   tipoETL: TipoETL;
   entidade: TipoEntidade;
@@ -180,7 +175,6 @@ export interface ObservabilityFilters {
   entidade?: TipoEntidade;
 }
 
-// Tipos para animações
 export interface AnimationConfig {
   initial?: any;
   animate?: any;
@@ -193,7 +187,6 @@ export interface PageTransition {
   exit: AnimationConfig;
 }
 
-// Tipos para configuração de gráficos ECharts
 export interface EChartsOption {
   title?: any;
   tooltip?: any;
@@ -208,7 +201,6 @@ export interface EChartsOption {
   animationDuration?: number;
 }
 
-// Tipos para métricas de performance
 export interface PerformanceMetrics {
   throughput: number;
   latency: number;
@@ -218,7 +210,46 @@ export interface PerformanceMetrics {
   averageProcessingTime: number;
 }
 
-// Tipos para configuração da aplicação
+export interface ExecutionHistory {
+  id: number;
+  type: string;
+  endpoint: string;
+  isSuccess: boolean;
+  status: string;
+  startTime: string;
+  endTime?: string;
+  duration?: string;
+  errorMessage?: string;
+  createdAt: string;
+  updatedAt?: string;
+  formattedDuration?: string;
+}
+
+export interface LoteResponse {
+  id: string;
+  tipoEntidade: string;
+  status: string;
+  dataInicio: string;
+  dataFim?: string;
+  totalItens: number;
+  itensProcessados: number;
+  itensComErro: number;
+  duracaoMs?: number;
+  correlationId: string;
+}
+
+export interface ItemLoteResponse {
+  id: string;
+  batchId: string;
+  identificadorItem: string;
+  status: string;
+  dataInicio: string;
+  dataFim?: string;
+  tentativas: number;
+  duracaoMs?: number;
+  mensagemErro?: string;
+}
+
 export interface AppConfig {
   apiBaseUrl: string;
   defaultPageSize: number;

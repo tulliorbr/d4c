@@ -82,6 +82,36 @@ public class ObservabilidadeController : ControllerBase
     }
   }
 
+  [HttpGet("metricas/detalhadas")]
+  public async Task<ActionResult<MetricasDetalhadasDto>> ObterMetricasDetalhadas([FromQuery] string? entidade = null, [FromQuery] int diasHistorico = 7)
+  {
+    try
+    {
+      var metricas = await _observabilidadeService.ObterMetricasDetalhadasAsync(entidade, diasHistorico);
+      return Ok(metricas);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Erro ao obter métricas detalhadas");
+      return StatusCode(500, "Erro interno do servidor");
+    }
+  }
+
+  [HttpGet("alertas")]
+  public async Task<ActionResult<List<AlertaPerformanceDto>>> ObterAlertas()
+  {
+    try
+    {
+      var alertas = await _observabilidadeService.ObterAlertasAsync();
+      return Ok(alertas);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Erro ao obter alertas");
+      return StatusCode(500, "Erro interno do servidor");
+    }
+  }
+
   [HttpPost("lotes/{loteId:int}/reprocessar")]
   public async Task<ActionResult> ReprocessarItensComErro(int loteId)
   {

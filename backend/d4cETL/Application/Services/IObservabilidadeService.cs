@@ -9,6 +9,8 @@ public interface IObservabilidadeService
   Task<ETLBatchDetalheDto?> ObterDetalheLoteAsync(int loteId);
   Task<PaginatedResult<ETLBatchItemDto>> ListarItensLoteAsync(int loteId, ItemFiltroDto filtro);
   Task<List<ETLMetricsDto>> ObterMetricasAsync(string? entidade = null);
+  Task<MetricasDetalhadasDto> ObterMetricasDetalhadasAsync(string? entidade = null, int diasHistorico = 7);
+  Task<List<AlertaPerformanceDto>> ObterAlertasAsync();
   Task<bool> ReprocessarItensComErroAsync(int loteId);
 
   Task<int> IniciarLoteAsync(string entidade, string tipoExecucao, Dictionary<string, object>? parametros = null);

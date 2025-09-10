@@ -1,6 +1,8 @@
 using d4cETL.Application.Configuration;
 using d4cETL.Application.Services;
+using d4cETL.Domain.Repositories;
 using d4cETL.Infrastructure.Data;
+using d4cETL.Infrastructure.Repositories;
 using d4cETL.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -20,7 +22,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<OmieETLContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.UseSqlite(connectionString, sqliteOptions =>
+    {
+        sqliteOptions.CommandTimeout(30);
+    })
+    .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
+    .EnableDetailedErrors(builder.Environment.IsDevelopment());
+}, ServiceLifetime.Scoped);
 
 builder.Services.AddHttpClient<IOmieApiService, OmieApiService>(client =>
 {
@@ -35,6 +45,9 @@ builder.Services.AddScoped<IOmieApiService, OmieApiService>();
 builder.Services.AddScoped<IETLService, ETLService>();
 builder.Services.AddScoped<IObservabilidadeService, ObservabilidadeService>();
 builder.Services.AddScoped<IRelatoriosService, RelatoriosService>();
+builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
+builder.Services.AddScoped<IExecutionHistoryRepository, ExecutionHistoryRepository>();
+builder.Services.AddScoped<IExecutionHistoryService, ExecutionHistoryService>();
 
 builder.Services.AddCors(options =>
 {

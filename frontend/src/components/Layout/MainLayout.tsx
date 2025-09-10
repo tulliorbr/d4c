@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavLink, useLocation } from "react-router-dom";
-import { Database, BarChart3, Activity, Menu, X, Bell } from "lucide-react";
+import { Database, BarChart3, Activity, Menu, X } from "lucide-react";
 import { useStoreStatus } from "../../hooks/useStoreStatus";
 import { ThemeToggle } from "../ThemeToggle";
 
@@ -47,7 +47,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { isLoading, hasErrors, stores } = useStoreStatus();
   const location = useLocation();
 
-  // Determine current module based on route
   const getCurrentModule = () => {
     if (location.pathname === "/" || location.pathname === "/etl") return "etl";
     if (location.pathname === "/relatorios") return "reports";
@@ -90,11 +89,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Sidebar Desktop */}
       <div className="hidden lg:flex lg:flex-shrink-0">
         <div className="flex flex-col w-64">
           <div className="flex flex-col flex-grow bg-background border-r border-border pt-5 pb-4 overflow-y-auto">
-            {/* Logo */}
             <div className="flex items-center flex-shrink-0 px-4">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -106,7 +103,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               </div>
             </div>
 
-            {/* Navigation */}
             <nav className="mt-8 flex-1 px-2 space-y-2">
               {modules.map((module) => {
                 const Icon = module.icon;
@@ -167,7 +163,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               })}
             </nav>
 
-            {/* Status Indicator */}
             <div className="px-4 py-3 border-t border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -188,18 +183,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                       : "Sistema OK"}
                   </span>
                 </div>
-                <Bell className="w-4 h-4 text-muted-foreground" />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
           <>
-            {/* Overlay */}
             <motion.div
               className="fixed inset-0 z-40 lg:hidden"
               variants={overlayVariants}
@@ -211,7 +203,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <div className="absolute inset-0 bg-background/75" />
             </motion.div>
 
-            {/* Sidebar */}
             <motion.div
               className="fixed inset-y-0 left-0 z-50 w-64 bg-background shadow-lg border-r border-border lg:hidden"
               variants={sidebarVariants}
@@ -220,7 +211,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               exit="closed"
             >
               <div className="flex flex-col h-full">
-                {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -238,7 +228,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   </button>
                 </div>
 
-                {/* Navigation */}
                 <nav className="flex-1 px-2 py-4 space-y-2">
                   {modules.map((module) => {
                     const Icon = module.icon;
@@ -290,13 +279,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
         <header className="bg-background shadow-sm border-b border-border">
           <div className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <div className="flex items-center space-x-4">
-              {/* Mobile menu button */}
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -304,7 +290,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 <Menu className="w-5 h-5" />
               </button>
 
-              {/* Module Title */}
               <div className="flex items-center space-x-3">
                 {currentModuleData && (
                   <>
@@ -326,9 +311,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               </div>
             </div>
 
-            {/* Right side */}
             <div className="flex items-center space-x-4">
-              {/* Global loading indicator */}
               {isLoading && (
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                   <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -341,7 +324,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </div>
         </header>
 
-        {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto bg-muted/30">
           <motion.div
             key={currentModule}

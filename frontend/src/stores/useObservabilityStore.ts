@@ -1,78 +1,48 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { PaginatedResponse, ETLBatchResumoDto, ETLMetricsDto } from '../types';
+import { ObservabilityFilters, ItemLoteResponse, ETLStatus } from '../types/domain';
 import { apiService } from '../services/api';
-import { 
-  LoteResponse, 
-  ItemLoteResponse, 
-  MetricaResponse,
-  PaginatedResponse,
-  ETLStatus,
-  TipoEntidade,
-  ObservabilityFilters
-} from '../types';
 
-interface ExecutionSummary {
-  entidade: TipoEntidade;
-  totalExecutions: number;
-  successfulExecutions: number;
-  failedExecutions: number;
-  averageDuration: number;
-  averageLatency: number;
-  throughput: number;
-  lastExecution?: Date;
-  totalRecordsProcessed: number;
-  totalRecordsWithError: number;
-}
 
-interface ObservabilityState {
-  // Lotes
-  lotes: LoteResponse[];
-  selectedLote: LoteResponse | null;
+
+export interface ObservabilityState {
+  lotes: ETLBatchResumoDto[];
+  selectedLote: ETLBatchResumoDto | null;
   totalLotes: number;
   currentPage: number;
   totalPages: number;
   
-  // Itens do lote selecionado
   itensLote: ItemLoteResponse[];
   totalItensLote: number;
   currentPageItens: number;
   totalPagesItens: number;
-  
-  // Métricas
-  metricas: MetricaResponse[];
-  
-  // Resumo de execuções
-  executionSummaries: ExecutionSummary[];
-  
-  // Filtros
+  metricas: ETLMetricsDto[];
   filters: ObservabilityFilters;
   
-  // Estados de loading
   loading: {
     lotes: boolean;
     itens: boolean;
     metricas: boolean;
-    resumo: boolean;
+
   };
   
-  // Erros
   errors: {
     lotes: string | null;
     itens: string | null;
     metricas: string | null;
-    resumo: string | null;
+
   };
   
-  // Configurações
   pageSize: number;
   pageSizeItens: number;
   autoRefresh: boolean;
   refreshInterval: number;
   
-  // Actions
   setFilters: (filters: Partial<ObservabilityFilters>) => void;
   loadLotes: (page?: number) => Promise<void>;
-  selectLote: (lote: LoteResponse) => void;
+  selectLote: (lote: ETLBatchResumoDto) => void;
   loadItensLote: (loteId: string, page?: number) => Promise<void>;
   loadMetricas: () => Promise<void>;
   reprocessarLote: (loteId: string) => Promise<void>;
@@ -87,13 +57,12 @@ interface ObservabilityState {
 }
 
 const initialFilters: ObservabilityFilters = {
-  dataInicio: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000), // 7 dias atrás
-  dataFim: new Date(), // Hoje
+  dataInicio: new Date(new Date().getTime() - 365 * 24 * 60 * 60 * 1000), 
+  dataFim: new Date(new Date().getTime() + 365 * 24 * 60 * 60 * 1000),
 };
 
 export const useObservabilityStore = create<ObservabilityState>()(devtools(
   (set, get) => ({
-    // Estado inicial
     lotes: [],
     selectedLote: null,
     totalLotes: 0,
@@ -104,26 +73,25 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
     currentPageItens: 1,
     totalPagesItens: 0,
     metricas: [],
-    executionSummaries: [],
+
     filters: initialFilters,
     loading: {
       lotes: false,
       itens: false,
       metricas: false,
-      resumo: false
+
     },
     errors: {
       lotes: null,
       itens: null,
       metricas: null,
-      resumo: null
+
     },
     pageSize: 20,
     pageSizeItens: 50,
     autoRefresh: false,
-    refreshInterval: 10000, // 10 segundos
+    refreshInterval: 10000,
     
-    // Actions
     setFilters: (newFilters) => {
       set((state) => ({
         filters: { ...state.filters, ...newFilters },
@@ -132,13 +100,11 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
         itensLote: []
       }), false, 'setFilters');
       
-      // Recarregar dados automaticamente
       get().loadAllData();
     },
     
     loadLotes: async (page) => {
       const targetPage = page || get().currentPage;
-      
       set((state) => ({
         loading: { ...state.loading, lotes: true },
         errors: { ...state.errors, lotes: null }
@@ -152,10 +118,9 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
           status: filters.status,
           entidade: filters.entidade,
           pagina: targetPage,
-          registrosPorPagina: pageSize
+          tamanhoPagina: pageSize
         };
-        
-        const response: PaginatedResponse<LoteResponse> = await apiService.obterLotes(params);
+        const response: PaginatedResponse<ETLBatchResumoDto> = await apiService.obterLotes(params);
         
         set((state) => ({
           lotes: response?.items || [],
@@ -166,6 +131,7 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
         }), false, 'loadLotes/success');
         
       } catch (error) {
+        console.error('ObservabilityStore - Error loading lotes:', error);
         const errorMessage = error instanceof Error ? error.message : 'Erro ao carregar lotes';
         set((state) => ({
           loading: { ...state.loading, lotes: false },
@@ -181,11 +147,10 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
         currentPageItens: 1
       }, false, 'selectLote');
       
-      // Carregar itens do lote automaticamente
-      get().loadItensLote(lote.id);
+      get().loadItensLote(lote.id.toString());
     },
     
-    loadItensLote: async (loteId, page) => {
+    loadItensLote: async (loteId: string, page?: number) => {
       const targetPage = page || get().currentPageItens;
       
       set((state) => ({
@@ -197,7 +162,7 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
         const { pageSizeItens } = get();
         const params = {
           pagina: targetPage,
-          registrosPorPagina: pageSizeItens
+          tamanhoPagina: pageSizeItens
         };
         
         const response: PaginatedResponse<ItemLoteResponse> = 
@@ -227,14 +192,8 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
       }), false, 'loadMetricas/start');
       
       try {
-        const { filters } = get();
-        const params = {
-          dataInicio: filters.dataInicio?.toISOString().split('T')[0],
-          dataFim: filters.dataFim?.toISOString().split('T')[0],
-          entidade: filters.entidade
-        };
-        
-        const metricas = await apiService.obterMetricas(params);
+        const response = await apiService.obterMetricas();
+        const metricas = Array.isArray(response) ? response : [];
         
         set((state) => ({
           metricas,
@@ -259,7 +218,6 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
       try {
         await apiService.reprocessarLote(loteId);
         
-        // Recarregar a lista de lotes após reprocessamento
         await get().loadLotes();
         
         set((state) => ({
@@ -277,7 +235,6 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
     },
     
     loadAllData: async () => {
-      // Carregar dados principais em paralelo
       await Promise.all([
         get().loadLotes(1),
         get().loadMetricas()
@@ -293,7 +250,7 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
       const { selectedLote } = get();
       if (selectedLote) {
         set({ currentPageItens: page }, false, 'setPageItens');
-        get().loadItensLote(selectedLote.id, page);
+        get().loadItensLote(selectedLote.id.toString(), page);
       }
     },
     
@@ -307,8 +264,7 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
         errors: {
           lotes: null,
           itens: null,
-          metricas: null,
-          resumo: null
+          metricas: null
         }
       }, false, 'clearErrors');
     },
@@ -328,24 +284,16 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
       const { autoRefresh } = get();
       set({ autoRefresh: !autoRefresh }, false, 'toggleAutoRefresh');
       
-      if (!autoRefresh) {
-        get().startAutoRefresh();
-      }
     },
     
     refreshData: async () => {
       const { selectedLote } = get();
-      
-      // Recarregar dados principais
       await get().loadAllData();
-      
-      // Se há um lote selecionado, recarregar seus itens também
       if (selectedLote) {
-        await get().loadItensLote(selectedLote.id, get().currentPageItens);
+        await get().loadItensLote(selectedLote.id.toString(), get().currentPageItens);
       }
     },
     
-    // Métodos privados
     startAutoRefresh: () => {
       const { refreshInterval } = get();
       
@@ -372,13 +320,12 @@ export const useObservabilityStore = create<ObservabilityState>()(devtools(
   }
 ));
 
-// Selectors
 export const useObservabilitySelectors = {
   lotes: () => useObservabilityStore((state) => state.lotes),
   selectedLote: () => useObservabilityStore((state) => state.selectedLote),
   itensLote: () => useObservabilityStore((state) => state.itensLote),
   metricas: () => useObservabilityStore((state) => state.metricas),
-  executionSummaries: () => useObservabilityStore((state) => state.executionSummaries),
+
   pagination: () => useObservabilityStore((state) => ({
     current: state.currentPage,
     total: state.totalPages,
@@ -395,23 +342,19 @@ export const useObservabilitySelectors = {
   loading: () => useObservabilityStore((state) => state.loading),
   errors: () => useObservabilityStore((state) => state.errors),
   
-  // Selectors computados
   hasData: () => useObservabilityStore((state) => 
     state.lotes.length > 0 || 
-    state.metricas.length > 0 || 
-    state.executionSummaries.length > 0
+    state.metricas.length > 0
   ),
   isLoading: () => useObservabilityStore((state) => 
     state.loading.lotes || 
     state.loading.itens || 
-    state.loading.metricas || 
-    state.loading.resumo
+    state.loading.metricas
   ),
   hasErrors: () => useObservabilityStore((state) => 
     state.errors.lotes !== null || 
     state.errors.itens !== null || 
-    state.errors.metricas !== null || 
-    state.errors.resumo !== null
+    state.errors.metricas !== null
   ),
   runningLotes: () => useObservabilityStore((state) => 
     state.lotes.filter(lote => lote.status === ETLStatus.RUNNING)

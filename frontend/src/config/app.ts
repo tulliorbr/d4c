@@ -1,22 +1,21 @@
-import { AppConfig } from '../types';
+import { AppConfig } from '../types/domain';
 
-// Configurações da aplicação
 export const appConfig: AppConfig = {
   apiBaseUrl: 'http://localhost:5131/api',
   defaultPageSize: 20,
-  refreshInterval: 5000, // 5 segundos
+  refreshInterval: 5000,
   animationDuration: 300,
   chartColors: [
-    '#3B82F6', // blue-500
-    '#10B981', // emerald-500
-    '#F59E0B', // amber-500
-    '#EF4444', // red-500
-    '#8B5CF6', // violet-500
-    '#06B6D4', // cyan-500
-    '#84CC16', // lime-500
-    '#F97316', // orange-500
-    '#EC4899', // pink-500
-    '#6366F1', // indigo-500
+    '#3B82F6',
+    '#10B981',
+    '#F59E0B',
+    '#EF4444',
+    '#8B5CF6',
+    '#06B6D4',
+    '#84CC16',
+    '#F97316',
+    '#EC4899',
+    '#6366F1',
   ],
   dateFormat: 'dd/MM/yyyy',
   currencyFormat: {
@@ -25,14 +24,12 @@ export const appConfig: AppConfig = {
   }
 };
 
-// Configurações de ambiente
 export const env = {
   isDevelopment: import.meta.env.DEV,
   isProduction: import.meta.env.PROD,
   apiUrl: import.meta.env.VITE_API_URL || appConfig.apiBaseUrl,
 };
 
-// Configurações de navegação
 export const navigation = {
   items: [
     {
@@ -59,7 +56,6 @@ export const navigation = {
   ]
 };
 
-// Configurações de tema
 export const theme = {
   colors: {
     primary: {
@@ -125,7 +121,6 @@ export const theme = {
   },
 };
 
-// Configurações de animação
 export const animations = {
   pageTransition: {
     initial: { opacity: 0, y: 20 },
@@ -157,7 +152,6 @@ export const animations = {
   }
 };
 
-// Configurações de gráficos ECharts
 export const chartDefaults = {
   animation: true,
   animationDuration: 750,
@@ -194,7 +188,6 @@ export const chartDefaults = {
   }
 };
 
-// Configurações de validação
 export const validation = {
   rules: {
     required: (message = 'Campo obrigatório') => ({
@@ -224,7 +217,6 @@ export const validation = {
   }
 };
 
-// Configurações de formatação
 export const formatters = {
   currency: (value: number): string => {
     return new Intl.NumberFormat(appConfig.currencyFormat.locale, {
@@ -234,14 +226,14 @@ export const formatters = {
       maximumFractionDigits: 2
     }).format(value);
   },
-  
+
   number: (value: number, decimals = 0): string => {
     return new Intl.NumberFormat('pt-BR', {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals
     }).format(value);
   },
-  
+
   percentage: (value: number, decimals = 1): string => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'percent',
@@ -249,12 +241,12 @@ export const formatters = {
       maximumFractionDigits: decimals
     }).format(value / 100);
   },
-  
+
   date: (date: Date | string): string => {
     const d = typeof date === 'string' ? new Date(date) : date;
     return new Intl.DateTimeFormat('pt-BR').format(d);
   },
-  
+
   dateTime: (date: Date | string): string => {
     const d = typeof date === 'string' ? new Date(date) : date;
     return new Intl.DateTimeFormat('pt-BR', {
@@ -266,12 +258,12 @@ export const formatters = {
       second: '2-digit'
     }).format(d);
   },
-  
+
   duration: (milliseconds: number): string => {
     const seconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
     } else if (minutes > 0) {
@@ -282,7 +274,6 @@ export const formatters = {
   }
 };
 
-// Configurações de debounce e throttle
 export const timing = {
   debounce: {
     search: 300,

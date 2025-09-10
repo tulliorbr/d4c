@@ -1,19 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { 
-  ETLRequest, 
-  ETLResponse, 
-  MovimentoResponse, 
-  CategoriaResponse, 
-  LoteResponse, 
-  ItemLoteResponse, 
-  MetricaResponse,
-  KPIResponse,
-  ApiResponse,
+import {
+  ETLExecutionResult,
+  MovimentoFinanceiro,
+  CategoriaDto,
+  ETLBatchResumoDto,
+  ETLItemDto,
+  ETLMetricsDto,
+  KPIData,
+  TabelaMovimentosResponse,
   PaginatedResponse
-} from '../types';
+} from '../types/api';
 import { env } from '../config/app';
 
-// Configuração base da API
 const API_BASE_URL = env.apiUrl;
 
 class ApiService {
@@ -22,16 +21,15 @@ class ApiService {
   constructor() {
     this.api = axios.create({
       baseURL: API_BASE_URL,
-      timeout: 30000, // 30 segundos
+      timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    // Interceptor para requests
     this.api.interceptors.request.use(
       (config) => {
-        console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
+
         return config;
       },
       (error) => {
@@ -40,10 +38,8 @@ class ApiService {
       }
     );
 
-    // Interceptor para responses
     this.api.interceptors.response.use(
       (response) => {
-        console.log(`[API] Response ${response.status}:`, response.data);
         return response;
       },
       (error) => {
@@ -55,53 +51,47 @@ class ApiService {
 
   private handleError(error: any): Error {
     if (error.response) {
-      // Erro de resposta do servidor
-      const message = error.response.data?.message || 
-                     error.response.data?.error || 
-                     `Erro ${error.response.status}: ${error.response.statusText}`;
+      const message = error.response.data?.message ||
+        error.response.data?.error ||
+        `Erro ${error.response.status}: ${error.response.statusText}`;
       return new Error(message);
     } else if (error.request) {
-      // Erro de rede
       return new Error('Erro de conexão com o servidor. Verifique sua conexão.');
     } else {
-      // Erro de configuração
       return new Error(error.message || 'Erro desconhecido');
     }
   }
 
-  // ETL Services
-  async executarMovimentos(): Promise<ETLResponse> {
-    const response: AxiosResponse<ApiResponse<ETLResponse>> = await this.api.post('/ETL/executar-movimentos', {});
-    return response.data.data;
+  async executarMovimentos(): Promise<ETLExecutionResult> {
+    const response: AxiosResponse<ETLExecutionResult> = await this.api.post('/ETL/executar-movimentos', {});
+    return response.data;
   }
 
-  async executarCategorias(): Promise<ETLResponse> {
-    const response: AxiosResponse<ApiResponse<ETLResponse>> = await this.api.post('/ETL/executar-categorias', {});
-    return response.data.data;
+  async executarCategorias(): Promise<ETLExecutionResult> {
+    const response: AxiosResponse<ETLExecutionResult> = await this.api.post('/ETL/executar-categorias', {});
+    return response.data;
   }
 
-  async executarFullLoad(): Promise<ETLResponse> {
-    const response: AxiosResponse<ApiResponse<ETLResponse>> = await this.api.post('/ETL/full-load', {});
-    return response.data.data;
+  async executarFullLoad(): Promise<ETLExecutionResult> {
+    const response: AxiosResponse<ETLExecutionResult> = await this.api.post('/ETL/full-load', {});
+    return response.data;
   }
 
-  async executarIncremental(): Promise<ETLResponse> {
-    const response: AxiosResponse<ApiResponse<ETLResponse>> = await this.api.post('/ETL/incremental', {});
-    return response.data.data;
+  async executarIncremental(): Promise<ETLExecutionResult> {
+    const response: AxiosResponse<ETLExecutionResult> = await this.api.post('/ETL/incremental', {});
+    return response.data;
   }
 
-  async executarTransformacao(): Promise<ETLResponse> {
-    const response: AxiosResponse<ApiResponse<ETLResponse>> = await this.api.post('/ETL/transformacao', {});
-    return response.data.data;
+  async executarTransformacao(): Promise<ETLExecutionResult> {
+    const response: AxiosResponse<ETLExecutionResult> = await this.api.post('/ETL/transformacao', {});
+    return response.data;
   }
-
-  // Função removida - endpoint não existe no backend
 
   async cancelarETL(loteId: string): Promise<void> {
     await this.api.post(`/etl/cancelar/${loteId}`, {});
   }
 
-  // Movimentos Services
+
   async obterMovimentos(params?: {
     dataInicio?: string;
     dataFim?: string;
@@ -109,130 +99,207 @@ class ApiService {
     categoria?: string;
     status?: string;
     pagina?: number;
-    registrosPorPagina?: number;
-  }): Promise<PaginatedResponse<MovimentoResponse>> {
-    const response: AxiosResponse<ApiResponse<PaginatedResponse<MovimentoResponse>>> = 
+    tamanhoPagina?: number;
+  }): Promise<PaginatedResponse<MovimentoFinanceiro>> {
+    const response: AxiosResponse<PaginatedResponse<MovimentoFinanceiro>> =
       await this.api.get('/movimentos', { params });
-    return response.data.data;
+    return response.data;
   }
 
-  async obterMovimentoPorId(id: string): Promise<MovimentoResponse> {
-    const response: AxiosResponse<ApiResponse<MovimentoResponse>> = 
+  async obterMovimentoPorId(id: string): Promise<MovimentoFinanceiro> {
+    const response: AxiosResponse<MovimentoFinanceiro> =
       await this.api.get(`/movimentos/${id}`);
-    return response.data.data;
+    return response.data;
   }
 
-  // Categorias Services
-  async obterCategorias(): Promise<CategoriaResponse[]> {
-    const response: AxiosResponse<ApiResponse<CategoriaResponse[]>> = 
+  async obterCategorias(): Promise<CategoriaDto[]> {
+    const response: AxiosResponse<CategoriaDto[]> =
       await this.api.get('/categorias');
-    return response.data.data;
+    return response.data;
   }
 
-  // Relatórios Services
   async obterKPIs(params?: {
     dataInicio?: string;
     dataFim?: string;
-  }): Promise<KPIResponse> {
-    const response: AxiosResponse<ApiResponse<KPIResponse>> = 
+  }): Promise<KPIData> {
+    const response: AxiosResponse<KPIData> =
       await this.api.get('/Relatorios/kpis', { params });
-    return response.data.data;
+    return response.data;
   }
 
   async obterGraficoLinha(params?: {
     dataInicio?: string;
     dataFim?: string;
   }): Promise<any[]> {
-    const response: AxiosResponse<ApiResponse<any[]>> = 
+    const response: AxiosResponse<any[]> =
       await this.api.get('/Relatorios/grafico/linha', { params });
-    return response.data.data;
+    return response.data;
   }
 
   async obterGraficoBarras(params?: {
     dataInicio?: string;
     dataFim?: string;
   }): Promise<any[]> {
-    const response: AxiosResponse<ApiResponse<any[]>> = 
+    const response: AxiosResponse<any[]> =
       await this.api.get('/Relatorios/grafico/barras', { params });
-    return response.data.data;
+    return response.data;
   }
 
   async obterGraficoPizza(params?: {
     dataInicio?: string;
     dataFim?: string;
   }): Promise<any[]> {
-    const response: AxiosResponse<ApiResponse<any[]>> = 
+    const response: AxiosResponse<any[]> =
       await this.api.get('/Relatorios/grafico/pizza', { params });
-    return response.data.data;
+    return response.data;
   }
 
   async obterTabela(params?: {
     dataInicio?: string;
     dataFim?: string;
-  }): Promise<any[]> {
-    const response: AxiosResponse<ApiResponse<any[]>> = 
+    natureza?: string;
+    categoria?: string;
+    status?: string;
+    pagina?: number;
+    tamanhoPagina?: number;
+  }): Promise<TabelaMovimentosResponse> {
+    const response: AxiosResponse<TabelaMovimentosResponse> =
       await this.api.get('/Relatorios/tabela', { params });
-    return response.data.data;
+    return response.data;
   }
 
-  // Observabilidade Services
   async obterLotes(params?: {
     dataInicio?: string;
     dataFim?: string;
     status?: string;
     entidade?: string;
     pagina?: number;
-    registrosPorPagina?: number;
-  }): Promise<PaginatedResponse<LoteResponse>> {
-    const response: AxiosResponse<ApiResponse<PaginatedResponse<LoteResponse>>> = 
+    tamanhoPagina?: number;
+  }): Promise<PaginatedResponse<ETLBatchResumoDto>> {
+    const response: AxiosResponse<PaginatedResponse<ETLBatchResumoDto>> =
       await this.api.get('/Observabilidade/lotes', { params });
-    return response.data.data;
+    return response.data;
   }
 
-  async obterLotePorId(id: string): Promise<LoteResponse> {
-    const response: AxiosResponse<ApiResponse<LoteResponse>> = 
+  async obterLotePorId(id: string): Promise<ETLBatchResumoDto> {
+    const response: AxiosResponse<ETLBatchResumoDto> =
       await this.api.get(`/Observabilidade/lotes/${id}`);
-    return response.data.data;
+    return response.data;
   }
 
   async obterItensLote(loteId: string, params?: {
     pagina?: number;
-    registrosPorPagina?: number;
-  }): Promise<PaginatedResponse<ItemLoteResponse>> {
-    const response: AxiosResponse<ApiResponse<PaginatedResponse<ItemLoteResponse>>> = 
+    tamanhoPagina?: number;
+  }): Promise<PaginatedResponse<ETLItemDto>> {
+    const response: AxiosResponse<PaginatedResponse<ETLItemDto>> =
       await this.api.get(`/Observabilidade/lotes/${loteId}/itens`, { params });
-    return response.data.data;
+    return response.data;
   }
 
   async obterMetricas(params?: {
     dataInicio?: string;
     dataFim?: string;
     entidade?: string;
-  }): Promise<MetricaResponse[]> {
-    const response: AxiosResponse<ApiResponse<MetricaResponse[]>> = 
-      await this.api.get('/Observabilidade/metricas', { params });
-    return response.data.data;
+  }): Promise<ETLMetricsDto[]> {
+    try {
+      const response: AxiosResponse<ETLMetricsDto[]> =
+        await this.api.get('/Observabilidade/metricas', { params });
+
+      const data = response.data;
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Erro ao obter métricas:', error);
+      return [];
+    }
+  }
+
+  async obterMetricasDetalhadas(entidade?: string, diasHistorico: number = 7): Promise<any> {
+    const params = new URLSearchParams();
+    if (entidade) params.append('entidade', entidade);
+    params.append('diasHistorico', diasHistorico.toString());
+
+    const response = await this.api.get(`/Observabilidade/metricas/detalhadas?${params}`);
+    return response.data;
+  }
+
+  async obterAlertas(): Promise<any[]> {
+    const response = await this.api.get('/Observabilidade/alertas');
+    return response.data;
   }
 
   async reprocessarLote(loteId: string): Promise<void> {
     await this.api.post(`/Observabilidade/lotes/${loteId}/reprocessar`, {});
   }
 
-  // Health Check
   async verificarSaude(): Promise<{ status: string; timestamp: string }> {
-    const response: AxiosResponse<{ status: string; timestamp: string }> = 
+    const response: AxiosResponse<{ status: string; timestamp: string }> =
       await this.api.get('/health');
+    return response.data;
+  }
+
+  async obterHistoricoExecucoes(params?: {
+    page?: number;
+    pageSize?: number;
+    type?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<any> {
+    if (params?.page || params?.pageSize) {
+      const response = await this.api.get('/executions/history/paged', { params });
+      return {
+        executions: response.data.data,
+        ...response.data.pagination
+      };
+    }
+
+    const response = await this.api.get('/executions/history', { params });
+    return {
+      executions: response.data
+    };
+  }
+
+  async executarETLMovimentos(params: {
+    pagina: number;
+    registrosPorPagina: number;
+  }): Promise<ETLExecutionResult> {
+    const response: AxiosResponse<ETLExecutionResult> =
+      await this.api.post('/ETL/executar-movimentos', params);
+    return response.data;
+  }
+
+  async executarETLCategorias(params: {
+    pagina: number;
+    registrosPorPagina: number;
+  }): Promise<ETLExecutionResult> {
+    const response: AxiosResponse<ETLExecutionResult> =
+      await this.api.post('/ETL/executar-categorias', params);
+    return response.data;
+  }
+
+  async executarETLFullLoad(params: {
+    entidade: string;
+    batchSize: number;
+  }): Promise<ETLExecutionResult> {
+    const response: AxiosResponse<ETLExecutionResult> =
+      await this.api.post('/ETL/full-load', params);
+    return response.data;
+  }
+
+  async executarETLIncremental(params: {
+    entidade: string;
+    batchSize: number;
+  }): Promise<ETLExecutionResult> {
+    const response: AxiosResponse<ETLExecutionResult> =
+      await this.api.post('/ETL/incremental', params);
     return response.data;
   }
 }
 
-// Instância singleton do serviço
 export const apiService = new ApiService();
 
-// Exportar a classe para casos especiais
 export { ApiService };
 
-// Funções utilitárias para formatação de parâmetros
 export const formatDateForAPI = (date: Date): string => {
   return date.toISOString().split('T')[0];
 };
@@ -244,5 +311,3 @@ export const formatDateTimeForAPI = (date: Date): string => {
 export const parseAPIDate = (dateString: string): Date => {
   return new Date(dateString);
 };
-
-// Interface PollingConfig removida - polling não é mais necessário

@@ -154,7 +154,6 @@ export const BatchList: React.FC<BatchListProps> = ({
         </span>
       </div>
 
-      {/* Filters */}
       <div className="space-y-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -163,7 +162,7 @@ export const BatchList: React.FC<BatchListProps> = ({
             placeholder="Buscar por ID ou entidade..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background"
+            className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
           />
         </div>
 
@@ -172,7 +171,7 @@ export const BatchList: React.FC<BatchListProps> = ({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
             >
               {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -190,7 +189,7 @@ export const BatchList: React.FC<BatchListProps> = ({
                 setSortBy(field as any);
                 setSortOrder(order as any);
               }}
-              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
             >
               <option value="dataInicio-desc">Mais recentes</option>
               <option value="dataInicio-asc">Mais antigos</option>
@@ -201,7 +200,6 @@ export const BatchList: React.FC<BatchListProps> = ({
         </div>
       </div>
 
-      {/* Batch List */}
       <div className="space-y-3 max-h-96 overflow-y-auto">
         {filteredAndSortedBatches.map((batch, index) => (
           <motion.div
@@ -280,7 +278,6 @@ export const BatchList: React.FC<BatchListProps> = ({
         ))}
       </div>
 
-      {/* Empty State */}
       {filteredAndSortedBatches.length === 0 && (
         <div className="text-center py-8">
           <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

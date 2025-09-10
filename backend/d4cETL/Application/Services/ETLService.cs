@@ -14,19 +14,22 @@ public class ETLService : IETLService
   private readonly ILogger<ETLService> _logger;
   private readonly d4cETL.Application.Configuration.ETLSettings _settings;
   private readonly IObservabilidadeService _observabilidadeService;
+  private readonly IExecutionHistoryService _executionHistoryService;
 
   public ETLService(
       IOmieApiService omieApiService,
       OmieETLContext context,
       ILogger<ETLService> logger,
       Microsoft.Extensions.Options.IOptions<d4cETL.Application.Configuration.ETLSettings> settings,
-      IObservabilidadeService observabilidadeService)
+      IObservabilidadeService observabilidadeService,
+      IExecutionHistoryService executionHistoryService)
   {
     _omieApiService = omieApiService;
     _context = context;
     _logger = logger;
     _settings = settings.Value;
     _observabilidadeService = observabilidadeService;
+    _executionHistoryService = executionHistoryService;
   }
 
   public async Task<MovimentosFinanceirosResponse> ExecutarETLMovimentosAsync(string correlationId, ExecutarMovimentosRequest request, CancellationToken cancellationToken = default)
@@ -88,11 +91,12 @@ public class ETLService : IETLService
     var stopwatch = System.Diagnostics.Stopwatch.StartNew();
     var totalProcessado = 0;
     var totalComErro = 0;
-    
-    // Iniciar lote de observabilidade
+
+    var executionHistory = await _executionHistoryService.StartExecutionAsync("ETL_Categorias");
+
     var loteId = await _observabilidadeService.IniciarLoteAsync(
-        "Categorias", 
-        "ETL_Completo", 
+        "Categorias",
+        "ETL_Completo",
         new Dictionary<string, object> { { "CorrelationId", correlationId } });
 
     try
@@ -120,16 +124,14 @@ public class ETLService : IETLService
           {
             var dto = response.CategoriaCadastro[i];
             var itemId = $"{correlationId}_cat_{dto.Codigo}";
-            
-            // Registrar início do item
+
             await _observabilidadeService.RegistrarInicioItemAsync(loteId, itemId, "Categoria", pagina, i + 1);
-            
+
             try
             {
               var categoria = TransformarCategoria(dto, correlationId);
               categorias.Add(categoria);
-              
-              // Registrar sucesso do item
+
               await _observabilidadeService.RegistrarFimItemAsync(itemId, "Sucesso", "Transformacao");
             }
             catch (Exception ex)
@@ -137,8 +139,7 @@ public class ETLService : IETLService
               _logger.LogWarning(ex, "Categoria ignorada devido a dados inválidos");
               errosNaPagina++;
               totalComErro++;
-              
-              // Registrar erro do item
+
               await _observabilidadeService.RegistrarFimItemAsync(itemId, "Erro", "Transformacao", null, ex.Message);
             }
           }
@@ -161,37 +162,39 @@ public class ETLService : IETLService
         }
 
       } while (pagina <= response.TotalDePaginas);
-      
-      // Finalizar lote com sucesso
+
       await _observabilidadeService.FinalizarLoteAsync(loteId, "Concluido");
+
+      await _executionHistoryService.CompleteExecutionAsync(executionHistory.Id, "Concluído");
 
       _logger.LogInformation("ETL de Categorias finalizado. Total processado: {Total}. CorrelationId: {CorrelationId}",
           totalProcessado, correlationId);
     }
     catch (Exception ex)
     {
-      // Finalizar lote com erro
       await _observabilidadeService.FinalizarLoteAsync(loteId, "Erro", ex.Message);
+
+      await _executionHistoryService.CompleteExecutionAsync(executionHistory.Id, "Erro", ex.Message);
+
       _logger.LogError(ex, "Erro ao executar ETL de categorias. CorrelationId: {CorrelationId}", correlationId);
       throw;
     }
     finally
     {
       stopwatch.Stop();
-      
-      // Registrar métricas
+
       var throughput = totalProcessado > 0 ? totalProcessado / stopwatch.Elapsed.TotalSeconds : 0;
       var latenciaMedia = totalProcessado > 0 ? stopwatch.ElapsedMilliseconds / (double)totalProcessado : 0;
-      
+
       await _observabilidadeService.RegistrarMetricasAsync(
-          "Categorias", 
+          "Categorias",
           "ETL_Completo",
-          totalProcessado + totalComErro, // registros lidos
-          totalProcessado, // registros processados
-          totalComErro, // registros com erro
-          throughput, // throughput
-          latenciaMedia, // latência média
-          stopwatch.ElapsedMilliseconds); // duração total
+          totalProcessado + totalComErro,
+          totalProcessado,
+          totalComErro,
+          throughput,
+          latenciaMedia,
+          stopwatch.ElapsedMilliseconds);
     }
   }
 
@@ -201,11 +204,12 @@ public class ETLService : IETLService
 
     var startTime = DateTime.UtcNow;
     var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-    
-    // Iniciar lote de observabilidade
+
+    var executionHistory = await _executionHistoryService.StartExecutionAsync("ETL_MovimentosFinanceiros");
+
     var loteId = await _observabilidadeService.IniciarLoteAsync(
-        "MovimentosFinanceiros", 
-        "ETL_Completo", 
+        "MovimentosFinanceiros",
+        "ETL_Completo",
         new Dictionary<string, object> { { "CorrelationId", correlationId } });
 
     var pagina = 1;
@@ -228,16 +232,14 @@ public class ETLService : IETLService
           {
             var dto = response.MovimentosFinanceiros[i];
             var itemId = $"{correlationId}_mov_{dto.Detalhes?.NCodTitulo ?? i.ToString()}";
-            
-            // Registrar início do item
+
             await _observabilidadeService.RegistrarInicioItemAsync(loteId, itemId, "MovimentoFinanceiro", pagina, i + 1);
-            
+
             try
             {
               var movimento = TransformarMovimentoFinanceiro(dto, correlationId);
               movimentos.Add(movimento);
-              
-              // Registrar sucesso do item
+
               await _observabilidadeService.RegistrarFimItemAsync(itemId, "Sucesso", "Transformacao");
             }
             catch (InvalidOperationException ex)
@@ -245,8 +247,7 @@ public class ETLService : IETLService
               _logger.LogWarning(ex, "Movimento ignorado devido a dados inválidos");
               errosNaPagina++;
               totalComErro++;
-              
-              // Registrar erro do item
+
               await _observabilidadeService.RegistrarFimItemAsync(itemId, "Erro", "Transformacao", null, ex.Message);
             }
           }
@@ -263,33 +264,35 @@ public class ETLService : IETLService
 
         pagina++;
       } while (pagina <= response.TotalDePaginas);
-      
-      // Finalizar lote com sucesso
+
       await _observabilidadeService.FinalizarLoteAsync(loteId, "Concluido");
+
+      await _executionHistoryService.CompleteExecutionAsync(executionHistory.Id, "Concluído");
     }
     catch (Exception ex)
     {
-      // Finalizar lote com erro
       await _observabilidadeService.FinalizarLoteAsync(loteId, "Erro", ex.Message);
+
+      await _executionHistoryService.CompleteExecutionAsync(executionHistory.Id, "Erro", ex.Message);
+
       throw;
     }
     finally
     {
       stopwatch.Stop();
-      
-      // Registrar métricas
+
       var throughput = totalProcessado > 0 ? totalProcessado / stopwatch.Elapsed.TotalSeconds : 0;
       var latenciaMedia = totalProcessado > 0 ? stopwatch.ElapsedMilliseconds / (double)totalProcessado : 0;
-      
+
       await _observabilidadeService.RegistrarMetricasAsync(
-          "MovimentosFinanceiros", 
+          "MovimentosFinanceiros",
           "ETL_Completo",
-          totalProcessado + totalComErro, // registros lidos
-          totalProcessado, // registros processados
-          totalComErro, // registros com erro
-          throughput, // throughput
-          latenciaMedia, // latência média
-          stopwatch.ElapsedMilliseconds); // duração total
+          totalProcessado + totalComErro,
+          totalProcessado,
+          totalComErro,
+          throughput,
+          latenciaMedia,
+          stopwatch.ElapsedMilliseconds);
     }
 
     _logger.LogInformation("ETL de Movimentos finalizado. Total processado: {Total}. CorrelationId: {CorrelationId}",

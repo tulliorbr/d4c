@@ -5,105 +5,54 @@ import {
   CheckCircle,
   XCircle,
   RefreshCw,
-  Download,
   BarChart3,
-  TrendingUp,
   Database,
+  Package,
 } from "lucide-react";
 import { useObservabilityStore } from "../../stores";
 import { LoadingSpinner, ErrorDisplay } from "../../components/Common";
-import {
-  BatchList,
-  BatchDetails,
-  ExecutionSummary,
-  MetricsOverview,
-} from "./components";
-import { SystemMetrics } from "../../types/api";
+import { MetricsOverview } from "./components";
+import BatchesAndItemsSection from "../../components/BatchesAndItemsSection";
+import ETLExecutionPanel from "../../components/ETLExecutionPanel";
 
 export const ObservabilityModule: React.FC = () => {
   const {
-    lotes: batches,
-    itensLote: batchItems,
+    lotes,
     metricas: metrics,
-    executionSummaries: executionSummary,
-
     loading,
     errors,
-    loadLotes: loadBatches,
-    loadItensLote: loadBatchItems,
-    loadMetricas: loadMetrics,
-
+    loadAllData,
+    refreshData,
+    loadMetricas,
     clearErrors,
   } = useObservabilityStore();
 
-  const isLoading = loading.lotes || loading.metricas || loading.resumo;
-  const error = errors.lotes || errors.metricas || errors.resumo;
+  const isLoading = loading.lotes || loading.metricas;
+  const error = errors.lotes || errors.metricas;
 
-  const [selectedBatch, setSelectedBatch] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"batches" | "metrics" | "summary">(
-    "batches"
+  const [activeTab, setActiveTab] = useState<"lotes-itens" | "metrics">(
+    "lotes-itens"
   );
-  const [autoRefresh, setAutoRefresh] = useState(false);
 
   useEffect(() => {
-    // Load initial data
-    loadBatches();
-    loadMetrics();
-  }, [loadBatches, loadMetrics]);
-
-  useEffect(() => {
-    // Auto refresh every 30 seconds if enabled
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      if (activeTab === "batches") {
-        loadBatches();
-        if (selectedBatch) {
-          loadBatchItems(selectedBatch);
-        }
-      } else if (activeTab === "metrics") {
-        loadMetrics();
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [
-    autoRefresh,
-    activeTab,
-    selectedBatch,
-    loadBatches,
-    loadBatchItems,
-    loadMetrics,
-  ]);
+    loadAllData();
+  }, [loadAllData]);
 
   const handleRefresh = () => {
     clearErrors();
 
-    if (activeTab === "batches") {
-      loadBatches();
-      if (selectedBatch) {
-        loadBatchItems(selectedBatch);
-      }
+    if (activeTab === "lotes-itens") {
+      refreshData();
     } else if (activeTab === "metrics") {
-      loadMetrics();
+      loadMetricas();
     }
-  };
-
-  const handleBatchSelect = (batchId: string) => {
-    setSelectedBatch(batchId);
-    loadBatchItems(batchId);
-  };
-
-  const handleExport = () => {
-    // Implementation for exporting observability data
-    console.log("Exporting observability data...");
   };
 
   const tabs = [
     {
-      id: "batches" as const,
+      id: "lotes-itens" as const,
       label: "Lotes & Itens",
-      icon: Database,
+      icon: Package,
       description: "Visualizar lotes de processamento e seus itens",
     },
     {
@@ -112,81 +61,39 @@ export const ObservabilityModule: React.FC = () => {
       icon: BarChart3,
       description: "Acompanhar métricas de performance e throughput",
     },
-    {
-      id: "summary" as const,
-      label: "Resumo Execuções",
-      icon: TrendingUp,
-      description: "Resumo consolidado das execuções por entidade",
-    },
   ];
 
   const getStatusStats = () => {
-    if (!batches || batches.length === 0) {
+
+    if (!lotes || !Array.isArray(lotes)) {
       return { total: 0, success: 0, error: 0, running: 0 };
     }
 
-    return batches.reduce(
-      (acc, batch) => {
+
+    const stats = lotes.reduce(
+      (acc, lote) => {
         acc.total++;
-        switch (batch.status.toLowerCase()) {
-          case "concluido":
-          case "sucesso":
-            acc.success++;
-            break;
-          case "erro":
-          case "falha":
-            acc.error++;
-            break;
-          case "executando":
-          case "processando":
-            acc.running++;
-            break;
+
+        if (lote.status === "Concluido" || lote.status === "Sucesso") {
+          acc.success++;
+        } else if (lote.status === "Erro" || lote.status === "Falha") {
+          acc.error++;
+        } else if (
+          lote.status === "Executando" ||
+          lote.status === "Em Andamento"
+        ) {
+          acc.running++;
         }
+
         return acc;
       },
       { total: 0, success: 0, error: 0, running: 0 }
     );
+
+    return stats;
   };
 
   const statusStats = getStatusStats();
-
-  // Converter métricas para o formato SystemMetrics
-  const convertToSystemMetrics = (): SystemMetrics | null => {
-    if (!metrics || metrics.length === 0) {
-      return null;
-    }
-
-    // Criar métricas padrão baseadas nos dados disponíveis
-    // Como não temos a estrutura exata de MetricaResponse, vamos criar valores padrão
-    return {
-      performance: {
-        throughputMedio: 150,
-        throughputPico: 300,
-        latenciaMedia: 45,
-        tendenciaThroughput: "up",
-      },
-      qualidade: {
-        totalProcessado: 1250,
-        taxaErro: 2.5,
-        taxaSucesso: 97.5,
-      },
-      recursos: {
-        cpuUsage: 65,
-        memoriaUsada: 4.2,
-        memoriaTotal: 8.0,
-        discoUsado: 120,
-        discoTotal: 500,
-      },
-      disponibilidade: {
-        uptime: 99.8,
-        tempoOnline: 720,
-        ultimaFalha: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      },
-      ultimaAtualizacao: new Date().toISOString(),
-    };
-  };
-
-  const systemMetrics = convertToSystemMetrics();
 
   if (error) {
     return (
@@ -204,34 +111,17 @@ export const ObservabilityModule: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
             Observabilidade
           </h1>
           <p className="text-muted-foreground mt-1">
-            Monitore lotes, métricas de performance e resumos de execução
+            Monitore lotes e métricas de performance
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="autoRefresh"
-              checked={autoRefresh}
-              onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="rounded border-border text-primary focus:ring-primary"
-            />
-            <label
-              htmlFor="autoRefresh"
-              className="text-sm text-muted-foreground"
-            >
-              Auto-refresh (30s)
-            </label>
-          </div>
-
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -244,20 +134,9 @@ export const ObservabilityModule: React.FC = () => {
             />
             Atualizar
           </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Exportar
-          </motion.button>
         </div>
       </div>
 
-      {/* Status Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -333,7 +212,6 @@ export const ObservabilityModule: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Tabs */}
       <div className="bg-card rounded-lg shadow-sm border border-border">
         <div className="border-b border-border">
           <nav className="flex space-x-8 px-6" aria-label="Tabs">
@@ -371,39 +249,17 @@ export const ObservabilityModule: React.FC = () => {
 
           {!isLoading && (
             <>
-              {activeTab === "batches" && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div>
-                    <BatchList
-                      batches={batches || []}
-                      selectedBatch={selectedBatch}
-                      onBatchSelect={handleBatchSelect}
-                      isLoading={loading.lotes}
-                    />
-                  </div>
-                  <div>
-                    {selectedBatch && (
-                      <BatchDetails
-                        batchId={selectedBatch}
-                        batchItems={batchItems || []}
-                        isLoading={loading.itens}
-                      />
-                    )}
-                  </div>
+              {activeTab === "lotes-itens" && (
+                <div className="space-y-6">
+                  <ETLExecutionPanel onExecutionComplete={handleRefresh} />
+                  <BatchesAndItemsSection />
                 </div>
               )}
 
               {activeTab === "metrics" && (
                 <MetricsOverview
-                  metrics={systemMetrics}
+                  metrics={metrics}
                   isLoading={loading.metricas}
-                />
-              )}
-
-              {activeTab === "summary" && (
-                <ExecutionSummary
-                  summaries={executionSummary || []}
-                  isLoading={loading.resumo}
                 />
               )}
             </>

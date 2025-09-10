@@ -313,6 +313,66 @@ namespace d4cETL.Migrations
                     b.ToTable("ETLMetrics");
                 });
 
+            modelBuilder.Entity("d4cETL.Domain.Entities.ExecutionHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeSpan?>("Duration")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsSuccess")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Endpoint");
+
+                    b.HasIndex("IsSuccess");
+
+                    b.HasIndex("StartTime");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Type");
+
+                    b.ToTable("ExecutionHistories");
+                });
+
             modelBuilder.Entity("d4cETL.Domain.Entities.MovimentoFinanceiro", b =>
                 {
                     b.Property<int>("Id")

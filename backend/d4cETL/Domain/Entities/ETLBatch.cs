@@ -21,7 +21,7 @@ public class ETLBatch
   public string? MensagemErro { get; set; }
   public string? StackTrace { get; set; }
   public string CorrelationId { get; set; } = string.Empty;
-  public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+  public DateTime CreatedAt { get; set; } = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time"));
   public DateTime? UpdatedAt { get; set; }
   public virtual ICollection<ETLBatchItem> Itens { get; set; } = new List<ETLBatchItem>();
 }

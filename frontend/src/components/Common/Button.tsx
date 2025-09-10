@@ -235,7 +235,6 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   );
 };
 
-// Button com gradiente animado
 export const GradientButton: React.FC<ButtonProps> = ({
   children,
   size = 'md',
@@ -271,10 +270,8 @@ export const GradientButton: React.FC<ButtonProps> = ({
       onClick={onClick}
       type={type}
     >
-      {/* Gradient background */}
       <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-size-200 animate-gradient" />
       
-      {/* Content */}
       <div className="relative flex items-center justify-center">
         {loading && (
           <LoadingSpinner size="sm" className="mr-2" />
@@ -296,7 +293,6 @@ export const GradientButton: React.FC<ButtonProps> = ({
   );
 };
 
-// Button group
 interface ButtonGroupProps {
   children: React.ReactNode;
   className?: string;

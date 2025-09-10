@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Filter, X, ChevronDown } from "lucide-react";
-import { ReportFilters } from "../../../types";
+import { ReportFilters } from "../../../types/domain";
 import { LoadingSpinner } from "../../../components/Common";
 import { Button } from "../../../components/Common";
 
@@ -68,7 +68,6 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
 
   const handleDateRangeChange = useCallback(
     (field: keyof DateRange, value: string) => {
-      // Verificação de segurança para localFilters e dateRange
       if (!localFilters || !localFilters.dateRange) {
         console.warn("localFilters ou dateRange não estão definidos");
         return;
@@ -85,10 +84,7 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
       };
 
       setLocalFilters(newLocalFilters);
-
-      // Usar setTimeout para evitar setState durante renderização
       setTimeout(() => {
-        // Verificações de segurança antes de criar reportFilters
         if (!newDateRange.startDate || !newDateRange.endDate) {
           console.warn("startDate ou endDate não estão definidos");
           return;
@@ -119,7 +115,6 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
 
   const handleFilterChange = useCallback(
     (field: keyof LocalFilters, value: any) => {
-      // Verificação de segurança para localFilters
       if (!localFilters) {
         console.warn("localFilters não está definido");
         return;
@@ -132,9 +127,7 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
 
       setLocalFilters(newLocalFilters);
 
-      // Usar setTimeout para evitar setState durante renderização
       setTimeout(() => {
-        // Verificações de segurança antes de criar reportFilters
         if (
           !newLocalFilters.dateRange ||
           !newLocalFilters.dateRange.startDate ||
@@ -231,7 +224,6 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
 
       setLocalFilters(newLocalFilters);
 
-      // Converter para o formato esperado pelo store
       const reportFilters: ReportFilters = {
         dataInicio: new Date(newDateRange.startDate),
         dataFim: new Date(newDateRange.endDate),
@@ -249,7 +241,6 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
             : undefined,
       };
 
-      // Usar setTimeout para evitar setState durante renderização
       setTimeout(() => {
         onFiltersChange(reportFilters);
       }, 0);
@@ -272,7 +263,6 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
 
     setLocalFilters(defaultLocalFilters);
 
-    // Converter para o formato esperado pelo store
     const reportFilters: ReportFilters = {
       dataInicio: new Date(defaultLocalFilters.dateRange.startDate),
       dataFim: new Date(defaultLocalFilters.dateRange.endDate),
@@ -281,7 +271,6 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
       status: undefined,
     };
 
-    // Usar setTimeout para evitar setState durante renderização
     setTimeout(() => {
       onFiltersChange(reportFilters);
     }, 0);
@@ -323,7 +312,6 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Quick Date Ranges */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-3">
           Períodos Rápidos
@@ -343,7 +331,6 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
         </div>
       </div>
 
-      {/* Custom Date Range */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
@@ -358,7 +345,7 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
                 handleDateRangeChange("startDate", e.target.value)
               }
               disabled={isLoading}
-              className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted/50 bg-background text-foreground"
+              className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted/50 bg-background text-foreground dark:bg-gray-800 dark:text-white"
             />
           </div>
         </div>
@@ -368,33 +355,34 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
             Data Final
           </label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-white" />
             <input
               type="date"
               value={localFilters?.dateRange?.endDate || ""}
               onChange={(e) => handleDateRangeChange("endDate", e.target.value)}
               disabled={isLoading}
-              className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted/50 bg-background text-foreground"
+              className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted/50 bg-background text-foreground dark:bg-gray-800 dark:text-white"
             />
           </div>
         </div>
       </div>
 
-      {/* Advanced Filters Toggle */}
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-2 text-primary hover:text-primary/80"
+          className="flex items-center gap-2 text-primary hover:text-primary/80 justify-between "
         >
-          <Filter className="w-4 h-4" />
-          Filtros Avançados
-          <ChevronDown
-            className={`w-4 h-4 transition-transform ${
-              showAdvanced ? "rotate-180" : ""
-            }`}
-          />
+          <div className="flex gap-2">
+            <Filter className="w-4 h-4" />
+            Filtros Avançados
+            <ChevronDown
+              className={`w-4 h-4 transition-transform ${
+                showAdvanced ? "rotate-180" : ""
+              }`}
+            />
+          </div>
         </Button>
 
         <Button
@@ -404,12 +392,13 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
           disabled={isLoading}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
-          <X className="w-4 h-4" />
-          Limpar Filtros
+          <div className="flex gap-2">
+            <X className="w-4 h-4" />
+            Limpar Filtros
+          </div>
         </Button>
       </div>
 
-      {/* Advanced Filters */}
       {showAdvanced && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
@@ -484,7 +473,6 @@ export const ReportsFilters: React.FC<ReportsFiltersProps> = ({
         </motion.div>
       )}
 
-      {/* Loading Indicator */}
       {isLoading && (
         <div className="flex items-center justify-center py-4">
           <LoadingSpinner size="sm" text="Aplicando filtros..." />

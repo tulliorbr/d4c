@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from "react";
 import * as echarts from "echarts";
 import { motion } from "framer-motion";
+import { useTheme } from "../../../components/ThemeProvider";
 
 interface EChartsData {
   title?: string;
@@ -27,31 +28,46 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<echarts.ECharts | null>(null);
+  const { theme } = useTheme();
+
+  const getThemeColors = () => {
+    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    return {
+      text: isDark ? '#ffffff' : '#000000',
+      mutedText: isDark ? '#a1a1aa' : '#71717a',
+      border: isDark ? '#27272a' : '#e4e4e7',
+      background: isDark ? '#09090b' : '#ffffff',
+      primary: isDark ? '#3b82f6' : '#2563eb',
+      success: isDark ? '#22c55e' : '#16a34a',
+      warning: isDark ? '#f59e0b' : '#d97706',
+      destructive: isDark ? '#ef4444' : '#dc2626',
+      secondary: isDark ? '#6b7280' : '#4b5563',
+    };
+  };
 
   useEffect(() => {
     if (!chartRef.current || !data) return;
 
-    // Initialize chart
     chartInstance.current = echarts.init(chartRef.current);
 
-    // Configure chart based on type
+    const colors = getThemeColors();
     let option: echarts.EChartsOption = {};
 
     switch (type) {
       case "line":
-        option = getLineChartOption(data);
+        option = getLineChartOption(data, colors);
         break;
       case "bar":
-        option = getBarChartOption(data);
+        option = getBarChartOption(data, colors);
         break;
       case "pie":
-        option = getPieChartOption(data);
+        option = getPieChartOption(data, colors);
         break;
     }
 
     chartInstance.current.setOption(option);
 
-    // Handle resize
     const handleResize = () => {
       chartInstance.current?.resize();
     };
@@ -62,10 +78,11 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
       window.removeEventListener("resize", handleResize);
       chartInstance.current?.dispose();
     };
-  }, [data, type]);
+  }, [data, type, theme]);
 
   const getLineChartOption = (
-    chartData: EChartsData
+    chartData: EChartsData,
+    colors: ReturnType<typeof getThemeColors>
   ): echarts.EChartsOption => {
     return {
       title: {
@@ -74,7 +91,7 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
         textStyle: {
           fontSize: 16,
           fontWeight: "bold",
-          color: "hsl(var(--foreground))",
+          color: colors.text,
         },
       },
       tooltip: {
@@ -104,7 +121,7 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
         data: chartData.series?.map((s) => s.name) || [],
         top: 40,
         textStyle: {
-          color: "hsl(var(--foreground))",
+          color: colors.text,
         },
       },
       grid: {
@@ -120,22 +137,22 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
         data: chartData.categories || [],
         axisLine: {
           lineStyle: {
-            color: "hsl(var(--border))",
+            color: colors.border,
           },
         },
         axisLabel: {
-          color: "hsl(var(--muted-foreground))",
+          color: colors.mutedText,
         },
       },
       yAxis: {
         type: "value",
         axisLine: {
           lineStyle: {
-            color: "hsl(var(--border))",
+            color: colors.border,
           },
         },
         axisLabel: {
-          color: "hsl(var(--muted-foreground))",
+          color: colors.mutedText,
           formatter: (value: number) => {
             return new Intl.NumberFormat("pt-BR", {
               style: "currency",
@@ -147,7 +164,7 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
         },
         splitLine: {
           lineStyle: {
-            color: "hsl(var(--border))",
+            color: colors.border,
           },
         },
       },
@@ -164,14 +181,16 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
             opacity: 0.1,
           },
           itemStyle: {
-            color:
-              index === 0 ? "hsl(var(--success))" : "hsl(var(--destructive))",
+            color: index === 0 ? colors.success : colors.destructive,
           },
         })) || [],
     };
   };
 
-  const getBarChartOption = (chartData: EChartsData): echarts.EChartsOption => {
+  const getBarChartOption = (
+    chartData: EChartsData,
+    colors: ReturnType<typeof getThemeColors>
+  ): echarts.EChartsOption => {
     return {
       title: {
         text: chartData.title || "Top 5 Categorias por Valor",
@@ -179,7 +198,7 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
         textStyle: {
           fontSize: 16,
           fontWeight: "bold",
-          color: "hsl(var(--foreground))",
+          color: colors.text,
         },
       },
       tooltip: {
@@ -212,11 +231,11 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
         data: chartData.categories || [],
         axisLine: {
           lineStyle: {
-            color: "hsl(var(--border))",
+            color: colors.border,
           },
         },
         axisLabel: {
-          color: "hsl(var(--muted-foreground))",
+          color: colors.mutedText,
           interval: 0,
           rotate: 45,
         },
@@ -225,11 +244,11 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
         type: "value",
         axisLine: {
           lineStyle: {
-            color: "hsl(var(--border))",
+            color: colors.border,
           },
         },
         axisLabel: {
-          color: "hsl(var(--muted-foreground))",
+          color: colors.mutedText,
           formatter: (value: number) => {
             return new Intl.NumberFormat("pt-BR", {
               style: "currency",
@@ -241,7 +260,7 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
         },
         splitLine: {
           lineStyle: {
-            color: "hsl(var(--border))",
+            color: colors.border,
           },
         },
       },
@@ -252,15 +271,15 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
           data: chartData.series?.[0]?.data || [],
           itemStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: "hsl(var(--primary))" },
-              { offset: 1, color: "hsl(var(--primary) / 0.8)" },
+              { offset: 0, color: colors.primary },
+              { offset: 1, color: colors.primary + '80' },
             ]),
           },
           emphasis: {
             itemStyle: {
               color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: "hsl(var(--primary) / 0.9)" },
-                { offset: 1, color: "hsl(var(--primary))" },
+                { offset: 0, color: colors.primary + '90' },
+                { offset: 1, color: colors.primary },
               ]),
             },
           },
@@ -269,7 +288,10 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
     };
   };
 
-  const getPieChartOption = (chartData: EChartsData): echarts.EChartsOption => {
+  const getPieChartOption = (
+    chartData: EChartsData,
+    colors: ReturnType<typeof getThemeColors>
+  ): echarts.EChartsOption => {
     const pieData =
       chartData.categories?.map((category, index) => ({
         name: category,
@@ -283,7 +305,7 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
         textStyle: {
           fontSize: 16,
           fontWeight: "bold",
-          color: "hsl(var(--foreground))",
+          color: colors.text,
         },
       },
       tooltip: {
@@ -304,7 +326,7 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
         left: "left",
         top: "middle",
         textStyle: {
-          color: "hsl(var(--foreground))",
+          color: colors.text,
         },
       },
       series: [
@@ -328,7 +350,7 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
               show: true,
               fontSize: 20,
               fontWeight: "bold",
-              color: "hsl(var(--foreground))",
+              color: colors.text,
             },
             itemStyle: {
               shadowBlur: 10,
@@ -341,11 +363,11 @@ export const ReportsCharts: React.FC<ReportsChartsProps> = ({
           },
           data: pieData,
           color: [
-            "hsl(var(--success))",
-            "hsl(var(--warning))",
-            "hsl(var(--destructive))",
-            "hsl(var(--secondary))",
-            "hsl(var(--primary))",
+            colors.success,
+            colors.warning,
+            colors.destructive,
+            colors.secondary,
+            colors.primary,
           ],
         },
       ],

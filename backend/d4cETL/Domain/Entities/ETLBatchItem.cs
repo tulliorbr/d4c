@@ -16,7 +16,7 @@ public class ETLBatchItem
   public double? DuracaoMs { get; set; }
   public string? MensagemErro { get; set; }
   public string? DadosOriginais { get; set; }
-  public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+  public DateTime CreatedAt { get; set; } = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time"));
   public DateTime? UpdatedAt { get; set; }
 
   public virtual ETLBatch ETLBatch { get; set; } = null!;

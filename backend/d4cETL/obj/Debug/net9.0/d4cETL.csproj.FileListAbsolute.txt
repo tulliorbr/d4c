@@ -319,3 +319,4 @@ C:\Users\Imply\Documents\d4c\backend\d4cETL\obj\Debug\net9.0\refint\d4cETL.dll
 C:\Users\Imply\Documents\d4c\backend\d4cETL\obj\Debug\net9.0\d4cETL.pdb
 C:\Users\Imply\Documents\d4c\backend\d4cETL\obj\Debug\net9.0\d4cETL.genruntimeconfig.cache
 C:\Users\Imply\Documents\d4c\backend\d4cETL\obj\Debug\net9.0\ref\d4cETL.dll
+C:\Users\tulli\Documents\d4c\backend\d4cETL\obj\Debug\net9.0\d4cETL.sourcelink.json

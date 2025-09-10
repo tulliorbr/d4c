@@ -6,7 +6,6 @@ import {
   PieChart,
   TrendingUp,
   Filter,
-  Download,
   RefreshCw,
   Eye,
   EyeOff,
@@ -24,7 +23,7 @@ import { ReportsCharts } from "./components/ReportsCharts";
 import { ReportsTable } from "./components/ReportsTable";
 import { ReportsFilters } from "./components/ReportsFilters";
 import { ReportsKPIs } from "./components/ReportsKPIs";
-import { ReportFilters } from "../../types";
+import { ReportFilters } from "../../types/domain";
 
 interface DateRange {
   startDate: string;
@@ -47,19 +46,16 @@ const ReportsModule: React.FC = () => {
     loadMovimentos: loadTableData,
     setFilters: updateFilters,
     setPage,
-    exportData,
   } = useReportsStore();
 
   const isLoading = loading.kpis || loading.charts || loading.table;
   const error = errors.kpis || errors.charts || errors.table;
 
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "charts" | "table">(
     "overview"
   );
-  const [isExporting, setIsExporting] = useState(false);
 
-  // Default date range: last 12 months
   const defaultDateRange: DateRange = {
     startDate: new Date(new Date().setMonth(new Date().getMonth() - 12))
       .toISOString()
@@ -68,7 +64,6 @@ const ReportsModule: React.FC = () => {
   };
 
   useEffect(() => {
-    // Initialize with default filters
     const initialFilters: ReportFilters = {
       dataInicio: new Date(defaultDateRange.startDate),
       dataFim: new Date(defaultDateRange.endDate),
@@ -78,7 +73,7 @@ const ReportsModule: React.FC = () => {
     };
 
     updateFilters(initialFilters);
-  }, []); // Array de dependências vazio para executar apenas uma vez na montagem
+  }, []);
 
   const handleFiltersChange = async (newFilters: ReportFilters) => {
     updateFilters(newFilters);
@@ -96,16 +91,7 @@ const ReportsModule: React.FC = () => {
     setPage(page);
   };
 
-  const handleExport = async (format: "excel" | "csv") => {
-    try {
-      setIsExporting(true);
-      await exportData(format);
-    } catch (err) {
-      console.error("Erro ao exportar dados:", err);
-    } finally {
-      setIsExporting(false);
-    }
-  };
+
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -114,61 +100,80 @@ const ReportsModule: React.FC = () => {
     }).format(value);
   };
 
-  const formatPercentage = (value: number) => {
+  const formatPercentage = (value: number | undefined | null) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return "0.0%";
+    }
     return `${value.toFixed(1)}%`;
   };
 
-  // Funções para transformar dados do store para formato ECharts
-  const transformToLineChart = (monthlyTrend: any[]) => {
-    if (!monthlyTrend || monthlyTrend.length === 0) return null;
+  const transformToLineChart = (monthlyTrend: any) => {
+    if (
+      !monthlyTrend ||
+      !monthlyTrend.meses ||
+      !Array.isArray(monthlyTrend.meses) ||
+      monthlyTrend.meses.length === 0
+    )
+      return null;
 
     return {
       title: "Entradas x Saídas por Mês",
-      categories: monthlyTrend.map((item) => item.month),
+      categories: monthlyTrend.meses,
       series: [
         {
           name: "Entradas",
-          data: monthlyTrend.map((item) => item.entradas),
+          data: monthlyTrend.entradas || [],
         },
         {
           name: "Saídas",
-          data: monthlyTrend.map((item) => item.saidas),
+          data: monthlyTrend.saidas || [],
         },
       ],
     };
   };
 
-  const transformToBarChart = (topCategories: any[]) => {
-    if (!topCategories || topCategories.length === 0) return null;
+  const transformToBarChart = (topCategories: any) => {
+    if (
+      !topCategories ||
+      !topCategories.categorias ||
+      !Array.isArray(topCategories.categorias) ||
+      topCategories.categorias.length === 0
+    )
+      return null;
 
     return {
       title: "Top 5 Categorias por Valor",
-      categories: topCategories.map((item) => item.categoria),
+      categories: topCategories.categorias.map((item: any) => item.descricao),
       series: [
         {
           name: "Valor",
-          data: topCategories.map((item) => item.valor),
+          data: topCategories.categorias.map((item: any) => item.valor),
         },
       ],
     };
   };
 
-  const transformToPieChart = (statusDistribution: any[]) => {
-    if (!statusDistribution || statusDistribution.length === 0) return null;
+  const transformToPieChart = (statusDistribution: any) => {
+    if (
+      !statusDistribution ||
+      !statusDistribution.distribuicao ||
+      !Array.isArray(statusDistribution.distribuicao) ||
+      statusDistribution.distribuicao.length === 0
+    )
+      return null;
 
     return {
       title: "Distribuição por Status",
-      categories: statusDistribution.map((item) => item.status),
+      categories: statusDistribution.distribuicao.map((item: any) => item.status),
       series: [
         {
           name: "Valor",
-          data: statusDistribution.map((item) => item.value),
+          data: statusDistribution.distribuicao.map((item: any) => item.valor),
         },
       ],
     };
   };
 
-  // Transformar dados do store
   const lineChartData = transformToLineChart(chartData.monthlyTrend);
   const barChartData = transformToBarChart(chartData.topCategories);
   const pieChartData = transformToPieChart(chartData.statusDistribution);
@@ -197,7 +202,6 @@ const ReportsModule: React.FC = () => {
       exit={{ opacity: 0, y: -20 }}
       className="p-6 space-y-6"
     >
-      {/* Header */}
       <div className="flex items-center justify-between">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -235,20 +239,9 @@ const ReportsModule: React.FC = () => {
           >
             Atualizar
           </Button>
-
-          <Button
-            variant="success"
-            onClick={() => handleExport("excel")}
-            disabled={isExporting}
-            loading={isExporting}
-            icon={Download}
-          >
-            Exportar
-          </Button>
         </motion.div>
       </div>
 
-      {/* Filters */}
       <AnimatePresence>
         {showFilters && (
           <motion.div
@@ -275,7 +268,6 @@ const ReportsModule: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Navigation Tabs */}
       <Card className="glass">
         <div className="border-b border-border">
           <nav className="flex space-x-8 px-6" aria-label="Tabs">
@@ -303,7 +295,6 @@ const ReportsModule: React.FC = () => {
           </nav>
         </div>
 
-        {/* Tab Content */}
         <div className="p-6">
           <AnimatePresence mode="wait">
             {activeTab === "overview" && (
@@ -314,7 +305,6 @@ const ReportsModule: React.FC = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-6"
               >
-                {/* KPIs */}
                 <ReportsKPIs
                   kpis={kpis}
                   isLoading={isLoading}
@@ -322,7 +312,6 @@ const ReportsModule: React.FC = () => {
                   formatPercentage={formatPercentage}
                 />
 
-                {/* Quick Charts Overview */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Card hover className="p-6">
                     <CardHeader icon={TrendingUp} iconColor="text-green-600">
@@ -369,7 +358,6 @@ const ReportsModule: React.FC = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-6"
               >
-                {/* Line Chart */}
                 <Card className="glass">
                   <CardHeader icon={TrendingUp} iconColor="text-green-600">
                     <h3 className="text-xl font-semibold text-foreground">
@@ -399,7 +387,6 @@ const ReportsModule: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* Bar Chart */}
                 <Card className="glass">
                   <CardHeader icon={BarChart3} iconColor="text-blue-600">
                     <h3 className="text-xl font-semibold text-foreground">
@@ -429,7 +416,6 @@ const ReportsModule: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* Pie Chart */}
                 <Card className="glass">
                   <CardHeader icon={PieChart} iconColor="text-purple-600">
                     <h3 className="text-xl font-semibold text-foreground">

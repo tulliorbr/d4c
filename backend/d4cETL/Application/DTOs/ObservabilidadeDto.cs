@@ -63,6 +63,50 @@ public class ETLMetricsDto
   public double TaxaSucessoMedia { get; set; }
 }
 
+public class MetricasDetalhadasDto
+{
+  public List<ETLMetricsDto> MetricasAtuais { get; set; } = new();
+  public List<TendenciaMetricaDto> TendenciasHistoricas { get; set; } = new();
+  public List<AlertaPerformanceDto> Alertas { get; set; } = new();
+  public ResumoPerformanceDto ResumoGeral { get; set; } = new();
+}
+
+public class TendenciaMetricaDto
+{
+  public string Entidade { get; set; } = string.Empty;
+  public DateTime Data { get; set; }
+  public decimal ThroughputMedio { get; set; }
+  public decimal LatenciaMedia { get; set; }
+  public decimal TaxaSucesso { get; set; }
+  public int TotalExecucoes { get; set; }
+}
+
+public class AlertaPerformanceDto
+{
+  public string Id { get; set; } = string.Empty;
+  public string Entidade { get; set; } = string.Empty;
+  public string Tipo { get; set; } = string.Empty;
+  public string Severidade { get; set; } = string.Empty; 
+  public string Mensagem { get; set; } = string.Empty;
+  public decimal ValorAtual { get; set; }
+  public decimal LimiteEsperado { get; set; }
+  public DateTime DataDeteccao { get; set; }
+  public bool Ativo { get; set; }
+}
+
+public class ResumoPerformanceDto
+{
+  public int TotalEntidades { get; set; }
+  public int EntidadesComAlertas { get; set; }
+  public decimal ThroughputMedioGeral { get; set; }
+  public decimal LatenciaMediaGeral { get; set; }
+  public decimal TaxaSucessoGeral { get; set; }
+  public decimal TendenciaThroughput { get; set; }
+  public decimal TendenciaLatencia { get; set; }
+  public decimal TendenciaTaxaSucesso { get; set; }
+  public DateTime UltimaAtualizacao { get; set; }
+}
+
 public class ObservabilidadeResumoDto
 {
   public List<ETLBatchResumoDto> UltimosLotes { get; set; } = new();
@@ -135,17 +179,7 @@ public class MetricasResumoDto
   public DateTime? UltimaExecucao { get; set; }
 }
 
-public class ExecucaoResumoDto
-{
-  public string Entidade { get; set; } = string.Empty;
-  public long RegistrosLidos { get; set; }
-  public long RegistrosProcessados { get; set; }
-  public long RegistrosComErro { get; set; }
-  public double Throughput { get; set; }
-  public TimeSpan LatenciaMedia { get; set; }
-  public DateTime UltimaExecucao { get; set; }
-  public string StatusUltimaExecucao { get; set; } = string.Empty;
-}
+
 
 public class PerformanceDto
 {

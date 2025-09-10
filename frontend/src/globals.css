@@ -288,7 +288,6 @@
     @apply bg-blue-900/20 text-blue-400 border-blue-800;
   }
 
-  /* Progress bars */
   .progress-bar {
     @apply w-full bg-gray-200 rounded-full h-2 overflow-hidden;
   }
@@ -301,7 +300,6 @@
     @apply bg-gray-700;
   }
 
-  /* Tooltip styles */
   .tooltip {
     @apply absolute z-50 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded shadow-lg;
     @apply opacity-0 invisible transition-all duration-200;
@@ -318,7 +316,6 @@
 
 @layer components {
 
-  /* Custom component styles */
   .btn {
     @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
@@ -368,7 +365,6 @@
 
 @layer utilities {
 
-  /* Custom utility classes */
   .text-balance {
     text-wrap: balance;
   }

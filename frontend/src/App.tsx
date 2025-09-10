@@ -11,9 +11,7 @@ import { ThemeProvider } from "./components/ThemeProvider";
 
 const ETLModule = React.lazy(() => import("./pages/ETL/ETLModule"));
 const ReportsModule = React.lazy(() => import("./pages/Reports/ReportsModule"));
-const ObservabilityModule = React.lazy(
-  () => import("./pages/Observability/ObservabilityModule")
-);
+import { ObservabilityModule } from "./pages/Observability/ObservabilityModule";
 
 function App() {
   const [appError, setAppError] = React.useState<string | null>(null);

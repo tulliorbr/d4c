@@ -1,60 +1,64 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import React from "react";
+import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  color?: 'blue' | 'green' | 'purple' | 'gray' | 'white';
+  size?: "sm" | "md" | "lg" | "xl";
+  color?: "blue" | "green" | "purple" | "gray" | "white";
   text?: string;
   fullScreen?: boolean;
   overlay?: boolean;
+  className?: string;
 }
 
 const sizeClasses = {
-  sm: 'w-4 h-4',
-  md: 'w-6 h-6',
-  lg: 'w-8 h-8',
-  xl: 'w-12 h-12'
+  sm: "w-4 h-4",
+  md: "w-6 h-6",
+  lg: "w-8 h-8",
+  xl: "w-12 h-12",
 };
 
 const colorClasses = {
-  blue: 'text-blue-500',
-  green: 'text-green-500',
-  purple: 'text-purple-500',
-  gray: 'text-gray-500',
-  white: 'text-white'
+  blue: "text-blue-500",
+  green: "text-green-500",
+  purple: "text-purple-500",
+  gray: "text-gray-500",
+  white: "text-white",
 };
 
 const textSizeClasses = {
-  sm: 'text-xs',
-  md: 'text-sm',
-  lg: 'text-base',
-  xl: 'text-lg'
+  sm: "text-xs",
+  md: "text-sm",
+  lg: "text-base",
+  xl: "text-lg",
 };
 
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
-  size = 'md',
-  color = 'blue',
+  size = "md",
+  color = "blue",
   text,
   fullScreen = false,
-  overlay = false
+  overlay = false,
+  className = "",
 }) => {
   const spinnerContent = (
-    <div className={`flex flex-col items-center justify-center space-y-3 ${
-      fullScreen ? 'min-h-screen' : 'p-8'
-    }`}>
+    <div
+      className={`flex flex-col items-center justify-center space-y-3 ${
+        fullScreen ? "min-h-screen" : "p-8"
+      } ${className}`}
+    >
       <motion.div
         animate={{ rotate: 360 }}
         transition={{
           duration: 1,
           repeat: Infinity,
-          ease: 'linear'
+          ease: "linear",
         }}
         className={`${sizeClasses[size]} ${colorClasses[color]}`}
       >
         <Loader2 className="w-full h-full" />
       </motion.div>
-      
+
       {text && (
         <motion.p
           initial={{ opacity: 0 }}
@@ -91,7 +95,6 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   return spinnerContent;
 };
 
-// Componente específico para loading de cards
 export const CardLoadingSpinner: React.FC<{ text?: string }> = ({ text }) => (
   <div className="flex items-center justify-center p-12">
     <div className="flex flex-col items-center space-y-3">
@@ -100,31 +103,28 @@ export const CardLoadingSpinner: React.FC<{ text?: string }> = ({ text }) => (
         transition={{
           duration: 1,
           repeat: Infinity,
-          ease: 'linear'
+          ease: "linear",
         }}
         className="w-8 h-8 text-gray-400"
       >
         <Loader2 className="w-full h-full" />
       </motion.div>
-      {text && (
-        <p className="text-sm text-gray-500 font-medium">{text}</p>
-      )}
+      {text && <p className="text-sm text-gray-500 font-medium">{text}</p>}
     </div>
   </div>
 );
 
-// Componente para loading inline
-export const InlineLoadingSpinner: React.FC<{ 
+export const InlineLoadingSpinner: React.FC<{
   text?: string;
-  size?: 'sm' | 'md';
-}> = ({ text, size = 'sm' }) => (
+  size?: "sm" | "md";
+}> = ({ text, size = "sm" }) => (
   <div className="flex items-center space-x-2">
     <motion.div
       animate={{ rotate: 360 }}
       transition={{
         duration: 1,
         repeat: Infinity,
-        ease: 'linear'
+        ease: "linear",
       }}
       className={`${sizeClasses[size]} text-gray-500`}
     >
@@ -138,11 +138,10 @@ export const InlineLoadingSpinner: React.FC<{
   </div>
 );
 
-// Componente para skeleton loading
 export const SkeletonLoader: React.FC<{
   lines?: number;
   className?: string;
-}> = ({ lines = 3, className = '' }) => (
+}> = ({ lines = 3, className = "" }) => (
   <div className={`space-y-3 ${className}`}>
     {Array.from({ length: lines }).map((_, index) => (
       <motion.div
@@ -152,17 +151,16 @@ export const SkeletonLoader: React.FC<{
         transition={{
           duration: 1.5,
           repeat: Infinity,
-          delay: index * 0.1
+          delay: index * 0.1,
         }}
         className={`h-4 bg-gray-200 rounded ${
-          index === lines - 1 ? 'w-3/4' : 'w-full'
+          index === lines - 1 ? "w-3/4" : "w-full"
         }`}
       />
     ))}
   </div>
 );
 
-// Componente para loading de tabela
 export const TableLoadingSpinner: React.FC<{
   rows?: number;
   columns?: number;
@@ -178,7 +176,7 @@ export const TableLoadingSpinner: React.FC<{
             transition={{
               duration: 1.5,
               repeat: Infinity,
-              delay: (rowIndex * columns + colIndex) * 0.05
+              delay: (rowIndex * columns + colIndex) * 0.05,
             }}
             className="h-8 bg-gray-200 rounded flex-1"
           />

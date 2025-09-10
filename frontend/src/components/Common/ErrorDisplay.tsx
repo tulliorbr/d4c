@@ -159,7 +159,6 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   );
 };
 
-// Componente específico para erros de API
 export const ApiErrorDisplay: React.FC<{
   error: string | Error | null;
   onRetry?: () => void;
@@ -175,7 +174,6 @@ export const ApiErrorDisplay: React.FC<{
   />
 );
 
-// Componente para erro em cards
 export const CardErrorDisplay: React.FC<{
   error: string | Error | null;
   onRetry?: () => void;
@@ -211,7 +209,6 @@ export const CardErrorDisplay: React.FC<{
   </div>
 );
 
-// Componente para erro inline
 export const InlineErrorDisplay: React.FC<{
   error: string | Error | null;
   size?: "sm" | "md";
@@ -234,7 +231,6 @@ export const InlineErrorDisplay: React.FC<{
   );
 };
 
-// Componente para página de erro
 export const PageErrorDisplay: React.FC<{
   error: string | Error | null;
   title?: string;

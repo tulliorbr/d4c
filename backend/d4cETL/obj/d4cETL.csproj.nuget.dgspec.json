@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Imply\\Documents\\d4c\\backend\\d4cETL\\d4cETL.csproj": {}
+    "C:\\Users\\tulli\\Documents\\d4c\\backend\\d4cETL\\d4cETL.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Imply\\Documents\\d4c\\backend\\d4cETL\\d4cETL.csproj": {
+    "C:\\Users\\tulli\\Documents\\d4c\\backend\\d4cETL\\d4cETL.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Imply\\Documents\\d4c\\backend\\d4cETL\\d4cETL.csproj",
+        "projectUniqueName": "C:\\Users\\tulli\\Documents\\d4c\\backend\\d4cETL\\d4cETL.csproj",
         "projectName": "d4cETL",
-        "projectPath": "C:\\Users\\Imply\\Documents\\d4c\\backend\\d4cETL\\d4cETL.csproj",
-        "packagesPath": "C:\\Users\\Imply\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Imply\\Documents\\d4c\\backend\\d4cETL\\obj\\",
+        "projectPath": "C:\\Users\\tulli\\Documents\\d4c\\backend\\d4cETL\\d4cETL.csproj",
+        "packagesPath": "C:\\Users\\tulli\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\tulli\\Documents\\d4c\\backend\\d4cETL\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Imply\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\tulli\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"

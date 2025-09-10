@@ -1,5 +1,6 @@
 using d4cETL.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 
 namespace d4cETL.Infrastructure.Data;
 
@@ -9,12 +10,46 @@ public class OmieETLContext : DbContext
   {
   }
 
+  protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+  {
+    if (!optionsBuilder.IsConfigured)
+    {
+      optionsBuilder.UseSqlite("Data Source=d4cetl.db;Mode=ReadWriteCreate;Cache=Shared;Foreign Keys=True");
+    }
+    
+    optionsBuilder.EnableServiceProviderCaching();
+    optionsBuilder.EnableSensitiveDataLogging(false);
+  }
+
+  public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+  {
+    var maxRetries = 3;
+    var delay = TimeSpan.FromMilliseconds(100);
+    
+    for (int attempt = 0; attempt < maxRetries; attempt++)
+    {
+      try
+      {
+        return await base.SaveChangesAsync(cancellationToken);
+      }
+      catch (DbUpdateException ex) when (ex.InnerException is SqliteException sqliteEx && sqliteEx.SqliteErrorCode == 5)
+      {
+        if (attempt == maxRetries - 1) throw;
+        
+        await Task.Delay(delay * (attempt + 1), cancellationToken);
+      }
+    }
+    
+    return 0;
+  }
+
   public DbSet<MovimentoFinanceiro> MovimentosFinanceiros { get; set; }
   public DbSet<Categoria> Categorias { get; set; }
 
   public DbSet<ETLBatch> ETLBatches { get; set; }
   public DbSet<ETLBatchItem> ETLBatchItems { get; set; }
   public DbSet<ETLMetrics> ETLMetrics { get; set; }
+  public DbSet<ExecutionHistory> ExecutionHistories { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -91,6 +126,22 @@ public class OmieETLContext : DbContext
       entity.HasIndex(e => e.Entidade);
       entity.HasIndex(e => e.DataExecucao);
       entity.HasIndex(e => e.UltimaExecucao);
+    });
+
+    modelBuilder.Entity<ExecutionHistory>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
+      entity.Property(e => e.Endpoint).IsRequired().HasMaxLength(100);
+      entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
+      entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
+
+      entity.HasIndex(e => e.Type);
+      entity.HasIndex(e => e.Endpoint);
+      entity.HasIndex(e => e.IsSuccess);
+      entity.HasIndex(e => e.Status);
+      entity.HasIndex(e => e.StartTime);
+      entity.HasIndex(e => e.CreatedAt);
     });
   }
 }

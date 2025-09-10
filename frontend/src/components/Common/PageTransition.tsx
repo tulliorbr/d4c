@@ -48,7 +48,6 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
   );
 };
 
-// Componente para animações de fade simples
 export const FadeTransition: React.FC<PageTransitionProps> = ({ 
   children, 
   className = '' 
@@ -66,7 +65,6 @@ export const FadeTransition: React.FC<PageTransitionProps> = ({
   );
 };
 
-// Componente para animações de slide
 export const SlideTransition: React.FC<PageTransitionProps & {
   direction?: 'left' | 'right' | 'up' | 'down';
 }> = ({ 
@@ -121,7 +119,6 @@ export const SlideTransition: React.FC<PageTransitionProps & {
   );
 };
 
-// Componente para animações de escala
 export const ScaleTransition: React.FC<PageTransitionProps> = ({ 
   children, 
   className = '' 
@@ -143,7 +140,6 @@ export const ScaleTransition: React.FC<PageTransitionProps> = ({
   );
 };
 
-// Componente para animações de rotação
 export const RotateTransition: React.FC<PageTransitionProps> = ({ 
   children, 
   className = '' 
@@ -165,7 +161,6 @@ export const RotateTransition: React.FC<PageTransitionProps> = ({
   );
 };
 
-// Componente para animações de blur
 export const BlurTransition: React.FC<PageTransitionProps> = ({ 
   children, 
   className = '' 

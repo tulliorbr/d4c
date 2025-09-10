@@ -37,8 +37,6 @@ export const ReportsKPIs: React.FC<ReportsKPIsProps> = ({
             title="Sem dados"
             value="--"
             icon={DollarSign}
-            trend="neutral"
-            className="opacity-50"
           />
         ))}
       </div>
@@ -49,8 +47,8 @@ export const ReportsKPIs: React.FC<ReportsKPIsProps> = ({
     {
       id: "entradas",
       title: "Entradas (R)",
-      value: kpis.entradas,
-      formatted: formatCurrency(kpis.entradas),
+      value: kpis.totalEntradas,
+      formatted: formatCurrency(kpis.totalEntradas),
       icon: TrendingUp,
       color: "text-green-600",
       bgColor: "bg-green-50/50",
@@ -61,8 +59,8 @@ export const ReportsKPIs: React.FC<ReportsKPIsProps> = ({
     {
       id: "saidas",
       title: "Saídas (P)",
-      value: kpis.saidas,
-      formatted: formatCurrency(kpis.saidas),
+      value: kpis.totalSaidas,
+      formatted: formatCurrency(kpis.totalSaidas),
       icon: TrendingDown,
       color: "text-red-600",
       bgColor: "bg-red-50/50",
@@ -86,8 +84,10 @@ export const ReportsKPIs: React.FC<ReportsKPIsProps> = ({
     {
       id: "percentual",
       title: "% Recebido/Pago",
-      value: (kpis as any).percentualRecebidoPago,
-      formatted: formatPercentage((kpis as any).percentualRecebidoPago),
+      value: kpis.percentualRecebido / kpis.percentualPago,
+      formatted: `${formatPercentage(
+        kpis.percentualRecebido
+      )} / ${formatPercentage(kpis.percentualPago)}`,
       icon: Percent,
       color: "text-purple-600",
       bgColor: "bg-purple-50/50",
@@ -100,10 +100,6 @@ export const ReportsKPIs: React.FC<ReportsKPIsProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {kpiCards.map((kpi, index) => {
-        const trendDirection = kpi.trend as "up" | "down" | "neutral";
-        const changeValue =
-          kpi.change !== 0 ? `${Math.abs(kpi.change).toFixed(1)}%` : undefined;
-
         return (
           <motion.div
             key={kpi.id}
@@ -111,30 +107,7 @@ export const ReportsKPIs: React.FC<ReportsKPIsProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <StatCard
-              title={kpi.title}
-              value={kpi.formatted}
-              icon={kpi.icon}
-              trend={trendDirection}
-              change={changeValue}
-              description={
-                kpi.id === "percentual"
-                  ? "Meta: 100%"
-                  : kpi.change !== 0
-                  ? `${
-                      kpi.trend === "up"
-                        ? "Aumento"
-                        : kpi.trend === "down"
-                        ? "Redução"
-                        : "Estável"
-                    } vs período anterior`
-                  : undefined
-              }
-              progress={
-                kpi.id === "percentual" ? Math.min(kpi.value, 100) : undefined
-              }
-              className="h-full"
-            />
+            <StatCard title={kpi.title} value={kpi.formatted} icon={kpi.icon} />
           </motion.div>
         );
       })}

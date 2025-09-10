@@ -92,21 +92,28 @@ public class RelatoriosService : IRelatoriosService
       query = query.Where(m => m.CNatureza == request.Natureza);
     }
 
-    var categorias = await query
+
+
+    var todasCategorias = await query
         .Where(m => !string.IsNullOrEmpty(m.CCodCateg))
-        .GroupBy(m => new { m.CCodCateg, m.CNatureza })
+        .Join(_context.Categorias,
+              m => m.CCodCateg,
+              c => c.Codigo,
+              (m, c) => new { Movimento = m, Categoria = c })
+        .GroupBy(mc => new { mc.Movimento.CCodCateg, mc.Movimento.CNatureza, mc.Categoria.Descricao })
         .Select(g => new CategoriaValor
         {
           Nome = g.Key.CCodCateg!,
+          Descricao = g.Key.Descricao,
           Natureza = g.Key.CNatureza ?? string.Empty,
-          Valor = g.Sum(m => m.NValorTitulo)
+          Valor = g.Sum(mc => mc.Movimento.NValorTitulo)
         })
         .ToListAsync(cancellationToken);
 
+    var categorias = todasCategorias.Where(c => c.Valor != 0).ToList();
 
     var categoriasOrdenadas = categorias
         .OrderByDescending(c => c.Valor)
-        .Take(5)
         .ToList();
 
     return new GraficoBarrasResponse { Categorias = categoriasOrdenadas };
@@ -163,21 +170,28 @@ public class RelatoriosService : IRelatoriosService
     var totalPaginas = (int)Math.Ceiling((double)totalRegistros / request.TamanhoPagina);
 
     var movimentos = await query
-        .OrderByDescending(m => m.DDtEmissao)
+        .GroupJoin(_context.Categorias,
+                   m => m.CCodCateg,
+                   c => c.Codigo,
+                   (m, categorias) => new { Movimento = m, Categorias = categorias })
+        .SelectMany(mc => mc.Categorias.DefaultIfEmpty(),
+                    (mc, c) => new { mc.Movimento, Categoria = c })
+        .OrderByDescending(mc => mc.Movimento.DDtEmissao)
         .Skip((request.Pagina - 1) * request.TamanhoPagina)
         .Take(request.TamanhoPagina)
-        .Select(m => new MovimentoResumo
+        .Select(mc => new MovimentoResumo
         {
-          NCodTitulo = m.NCodTitulo,
-          CCodIntTitulo = m.CCodIntTitulo,
-          DDtEmissao = m.DDtEmissao,
-          DDtVenc = m.DDtVenc,
-          DDtPagamento = m.DDtPagamento,
-          CNatureza = m.CNatureza ?? string.Empty,
-          CStatus = m.CStatus,
-          CCodCateg = m.CCodCateg,
-          NValorTitulo = m.NValorTitulo,
-          CCPFCNPJCliente = m.CCPFCNPJCliente
+          NCodTitulo = mc.Movimento.NCodTitulo,
+          CCodIntTitulo = mc.Movimento.CCodIntTitulo,
+          DDtEmissao = mc.Movimento.DDtEmissao,
+          DDtVenc = mc.Movimento.DDtVenc,
+          DDtPagamento = mc.Movimento.DDtPagamento,
+          CNatureza = mc.Movimento.CNatureza ?? string.Empty,
+          CStatus = mc.Movimento.CStatus,
+          CCodCateg = mc.Movimento.CCodCateg,
+          DescricaoCategoria = mc.Categoria != null ? mc.Categoria.Descricao : null,
+          NValorTitulo = mc.Movimento.NValorTitulo,
+          CCPFCNPJCliente = mc.Movimento.CCPFCNPJCliente
         })
         .ToListAsync(cancellationToken);
 

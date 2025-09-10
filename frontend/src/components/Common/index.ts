@@ -1,4 +1,4 @@
-// Loading components
+
 export { 
   LoadingSpinner,
   CardLoadingSpinner,
@@ -7,7 +7,6 @@ export {
   TableLoadingSpinner
 } from './LoadingSpinner';
 
-// Error components
 export {
   ErrorDisplay,
   ApiErrorDisplay,
@@ -41,9 +40,7 @@ export {
   ButtonGroup 
 } from './Button';
 
-// Status Badge
 export { StatusBadge } from './StatusBadge';
 
-// Re-export types if needed
 export type { } from './LoadingSpinner';
 export type { } from './ErrorDisplay';

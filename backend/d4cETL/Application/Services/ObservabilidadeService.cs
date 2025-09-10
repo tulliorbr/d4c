@@ -358,4 +358,181 @@ public class ObservabilidadeService : IObservabilidadeService
 
     _logger.LogInformation("Métricas registradas para entidade {Entidade}: {RegistrosProcessados} registros processados", entidade, registrosProcessados);
   }
+
+  public async Task<MetricasDetalhadasDto> ObterMetricasDetalhadasAsync(string? entidade = null, int diasHistorico = 7)
+  {
+    var dataLimite = DateTime.UtcNow.AddDays(-diasHistorico);
+
+    var metricasAtuais = await ObterMetricasAsync(entidade);
+
+    var query = _context.ETLMetrics.AsQueryable();
+    if (!string.IsNullOrEmpty(entidade))
+      query = query.Where(m => m.Entidade == entidade);
+
+    var tendenciasHistoricas = await query
+      .Where(m => m.DataExecucao >= dataLimite)
+      .GroupBy(m => new { m.Entidade, Data = m.DataExecucao.Date })
+      .Select(g => new
+      {
+        Entidade = g.Key.Entidade,
+        Data = g.Key.Data,
+        ThroughputMedio = g.Average(m => m.ThroughputRegistrosPorSegundo),
+        LatenciaMedia = g.Average(m => m.LatenciaMediaMs),
+        TaxaSucesso = g.Average(m => m.RegistrosProcessados > 0 ?
+          (double)(m.RegistrosProcessados - m.RegistrosComErro) / m.RegistrosProcessados * 100 : 0),
+        TotalExecucoes = g.Count()
+      })
+      .OrderBy(t => t.Data)
+      .ToListAsync();
+
+    var tendenciasHistoricasDto = tendenciasHistoricas.Select(t => new TendenciaMetricaDto
+    {
+      Entidade = t.Entidade,
+      Data = t.Data,
+      ThroughputMedio = (decimal)t.ThroughputMedio,
+      LatenciaMedia = (decimal)t.LatenciaMedia,
+      TaxaSucesso = (decimal)t.TaxaSucesso,
+      TotalExecucoes = t.TotalExecucoes
+    }).ToList();
+
+    var alertas = await GerarAlertasAsync(metricasAtuais, tendenciasHistoricasDto);
+
+    var resumoGeral = CalcularResumoPerformance(metricasAtuais, tendenciasHistoricasDto);
+
+    return new MetricasDetalhadasDto
+    {
+      MetricasAtuais = metricasAtuais,
+      TendenciasHistoricas = tendenciasHistoricasDto,
+      Alertas = alertas,
+      ResumoGeral = resumoGeral
+    };
+  }
+
+  public async Task<List<AlertaPerformanceDto>> ObterAlertasAsync()
+  {
+    var metricasAtuais = await ObterMetricasAsync();
+    var tendenciasHistoricasData = await _context.ETLMetrics
+      .Where(m => m.DataExecucao >= DateTime.UtcNow.AddDays(-7))
+      .GroupBy(m => new { m.Entidade, Data = m.DataExecucao.Date })
+      .Select(g => new
+      {
+        Entidade = g.Key.Entidade,
+        Data = g.Key.Data,
+        ThroughputMedio = g.Average(m => m.ThroughputRegistrosPorSegundo),
+        LatenciaMedia = g.Average(m => m.LatenciaMediaMs),
+        TaxaSucesso = g.Average(m => m.RegistrosProcessados > 0 ?
+          (double)(m.RegistrosProcessados - m.RegistrosComErro) / m.RegistrosProcessados * 100 : 0)
+      })
+      .ToListAsync();
+
+    var tendenciasHistoricas = tendenciasHistoricasData.Select(t => new TendenciaMetricaDto
+    {
+      Entidade = t.Entidade,
+      Data = t.Data,
+      ThroughputMedio = (decimal)t.ThroughputMedio,
+      LatenciaMedia = (decimal)t.LatenciaMedia,
+      TaxaSucesso = (decimal)t.TaxaSucesso
+    }).ToList();
+
+    return await GerarAlertasAsync(metricasAtuais, tendenciasHistoricas);
+  }
+
+  private async Task<List<AlertaPerformanceDto>> GerarAlertasAsync(List<ETLMetricsDto> metricasAtuais, List<TendenciaMetricaDto> tendenciasHistoricas)
+  {
+    var alertas = new List<AlertaPerformanceDto>();
+
+    foreach (var metrica in metricasAtuais)
+    {
+      var tendenciasEntidade = tendenciasHistoricas.Where(t => t.Entidade == metrica.Entidade).ToList();
+
+      if (metrica.ThroughputMedio < 10)
+      {
+        alertas.Add(new AlertaPerformanceDto
+        {
+          Id = Guid.NewGuid().ToString(),
+          Entidade = metrica.Entidade,
+          Tipo = "Throughput",
+          Severidade = metrica.ThroughputMedio < 5 ? "Critica" : "Alta",
+          Mensagem = $"Throughput baixo: {metrica.ThroughputMedio:F2} registros/seg",
+          ValorAtual = (decimal)metrica.ThroughputMedio,
+          LimiteEsperado = 10,
+          DataDeteccao = DateTime.UtcNow,
+          Ativo = true
+        });
+      }
+
+      if (metrica.LatenciaMedia > 1000)
+      {
+        alertas.Add(new AlertaPerformanceDto
+        {
+          Id = Guid.NewGuid().ToString(),
+          Entidade = metrica.Entidade,
+          Tipo = "Latencia",
+          Severidade = metrica.LatenciaMedia > 5000 ? "Critica" : "Alta",
+          Mensagem = $"Latência alta: {metrica.LatenciaMedia:F2}ms",
+          ValorAtual = (decimal)metrica.LatenciaMedia,
+          LimiteEsperado = 1000,
+          DataDeteccao = DateTime.UtcNow,
+          Ativo = true
+        });
+      }
+
+      if (metrica.TaxaSucessoMedia < 95)
+      {
+        alertas.Add(new AlertaPerformanceDto
+        {
+          Id = Guid.NewGuid().ToString(),
+          Entidade = metrica.Entidade,
+          Tipo = "TaxaErro",
+          Severidade = metrica.TaxaSucessoMedia < 80 ? "Critica" : "Media",
+          Mensagem = $"Taxa de sucesso baixa: {metrica.TaxaSucessoMedia:F1}%",
+          ValorAtual = (decimal)metrica.TaxaSucessoMedia,
+          LimiteEsperado = 95,
+          DataDeteccao = DateTime.UtcNow,
+          Ativo = true
+        });
+      }
+    }
+
+    return alertas;
+  }
+
+  private ResumoPerformanceDto CalcularResumoPerformance(List<ETLMetricsDto> metricasAtuais, List<TendenciaMetricaDto> tendenciasHistoricas)
+  {
+    var resumo = new ResumoPerformanceDto
+    {
+      TotalEntidades = metricasAtuais.Count,
+      ThroughputMedioGeral = metricasAtuais.Any() ? (decimal)metricasAtuais.Average(m => m.ThroughputMedio) : 0,
+      LatenciaMediaGeral = metricasAtuais.Any() ? (decimal)metricasAtuais.Average(m => m.LatenciaMedia) : 0,
+      TaxaSucessoGeral = metricasAtuais.Any() ? (decimal)metricasAtuais.Average(m => m.TaxaSucessoMedia) : 0,
+      UltimaAtualizacao = DateTime.UtcNow
+    };
+
+    if (tendenciasHistoricas.Any())
+    {
+      var dataCorte = DateTime.UtcNow.AddDays(-3).Date;
+      var recentes = tendenciasHistoricas.Where(t => t.Data >= dataCorte).ToList();
+      var anteriores = tendenciasHistoricas.Where(t => t.Data < dataCorte).ToList();
+
+      if (recentes.Any() && anteriores.Any())
+      {
+        var throughputRecente = (double)recentes.Average(r => r.ThroughputMedio);
+        var throughputAnterior = (double)anteriores.Average(a => a.ThroughputMedio);
+        resumo.TendenciaThroughput = throughputAnterior > 0 ?
+          (decimal)((throughputRecente - throughputAnterior) / throughputAnterior * 100) : 0;
+
+        var latenciaRecente = (double)recentes.Average(r => r.LatenciaMedia);
+        var latenciaAnterior = (double)anteriores.Average(a => a.LatenciaMedia);
+        resumo.TendenciaLatencia = latenciaAnterior > 0 ?
+          (decimal)((latenciaRecente - latenciaAnterior) / latenciaAnterior * 100) : 0;
+
+        var sucessoRecente = (double)recentes.Average(r => r.TaxaSucesso);
+        var sucessoAnterior = (double)anteriores.Average(a => a.TaxaSucesso);
+        resumo.TendenciaTaxaSucesso = sucessoAnterior > 0 ?
+          (decimal)((sucessoRecente - sucessoAnterior) / sucessoAnterior * 100) : 0;
+      }
+    }
+
+    return resumo;
+  }
 }

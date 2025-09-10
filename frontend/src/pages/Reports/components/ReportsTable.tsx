@@ -3,17 +3,15 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
-  Download,
   ArrowUp,
   ArrowDown,
   AlertCircle,
   ArrowUpDown,
 } from "lucide-react";
-import { MovimentoFinanceiro } from "../../../types";
+import { MovimentoResumo } from "../../../types";
 import {
   formatCurrency,
   formatDateSimple,
-  formatCpfCnpj,
   formatNatureza,
 } from "../../../utils/formatters";
 import {
@@ -25,7 +23,7 @@ import {
 } from "../../../components/Common";
 
 interface ReportsTableProps {
-  data: MovimentoFinanceiro[];
+  data: MovimentoResumo[];
   loading?: boolean;
   currentPage: number;
   totalPages: number;
@@ -34,10 +32,11 @@ interface ReportsTableProps {
   onSort?: (field: SortField, direction: "asc" | "desc") => void;
   onSelectItems?: (items: string[]) => void;
   onPageChange?: (page: number) => void;
+  onItemsPerPageChange?: (itemsPerPage: number) => void;
   className?: string;
 }
 
-type SortField = keyof MovimentoFinanceiro;
+type SortField = keyof MovimentoResumo;
 
 export const ReportsTable: React.FC<ReportsTableProps> = ({
   data,
@@ -48,12 +47,12 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   itemsPerPage,
   onSort,
   onPageChange,
+  onItemsPerPageChange,
 }) => {
   const [sortField, setSortField] = useState<SortField>("nCodTitulo");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
-  // Use data directly from props (already paginated)
   const currentData = data;
 
   const handleSort = (field: SortField) => {
@@ -126,7 +125,8 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
               </label>
               <select
                 value={itemsPerPage}
-                className="px-3 py-1 border border-border rounded text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                onChange={(e) => onItemsPerPageChange?.(Number(e.target.value))}
+                className="px-3 py-1 border border-border rounded text-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white"
               >
                 <option value={10}>10</option>
                 <option value={25}>25</option>
@@ -134,11 +134,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 <option value={100}>100</option>
               </select>
             </div>
-
-            <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
-              <Download className="w-4 h-4" />
-              Exportar
-            </button>
           </div>
         </div>
       </CardHeader>
@@ -170,15 +165,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort("dDtEmissao")}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>Data Emissão</span>
-                    {getSortIcon("dDtEmissao")}
-                  </div>
-                </th>
-                <th
-                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer"
                   onClick={() => handleSort("dDtVenc")}
                 >
                   <div className="flex items-center space-x-1">
@@ -186,15 +172,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                     {getSortIcon("dDtVenc")}
                   </div>
                 </th>
-                <th
-                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort("dDtPagamento")}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>Data Pagamento</span>
-                    {getSortIcon("dDtPagamento")}
-                  </div>
-                </th>
+
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer"
                   onClick={() => handleSort("cNatureza")}
@@ -215,11 +193,11 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort("cCodCateg")}
+                  onClick={() => handleSort("descricaoCategoria")}
                 >
                   <div className="flex items-center space-x-1">
                     <span>Categoria</span>
-                    {getSortIcon("cCodCateg")}
+                    {getSortIcon("descricaoCategoria")}
                   </div>
                 </th>
                 <th
@@ -231,15 +209,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                     {getSortIcon("nValorTitulo")}
                   </div>
                 </th>
-                <th
-                  className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort("ccpfcnpjCliente")}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>CPF/CNPJ Cliente</span>
-                    {getSortIcon("ccpfcnpjCliente")}
-                  </div>
-                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Ações
                 </th>
@@ -248,7 +217,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
             <tbody className="bg-background divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={11} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       <span className="ml-2 text-muted-foreground">
@@ -260,7 +229,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
               ) : currentData.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={11}
+                    colSpan={8}
                     className="px-6 py-12 text-center text-muted-foreground"
                   >
                     Nenhum movimento encontrado
@@ -290,15 +259,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                       {item.nCodTitulo}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      {formatDateSimple(item.dDtEmissao)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                       {formatDateSimple(item.dDtVenc)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      {item.dDtPagamento
-                        ? formatDateSimple(item.dDtPagamento)
-                        : "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                       <span
@@ -315,13 +276,10 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                       <StatusBadge status={item.cStatus} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      {item.cCodCateg}
+                      {item.descricaoCategoria}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                       {formatCurrency(item.nValorTitulo)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      {formatCpfCnpj(item.ccpfcnpjCliente)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                       <button className="text-muted-foreground hover:text-foreground">
@@ -335,7 +293,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           </table>
         </div>
 
-        {/* Empty State */}
         {currentData.length === 0 && (
           <div className="p-12 text-center">
             <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -348,7 +305,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
           </div>
         )}
 
-        {/* Paginação */}
         <div className="bg-background px-4 py-3 flex items-center justify-between border-t border-border sm:px-6">
           <div className="flex-1 flex justify-between sm:hidden">
             <button

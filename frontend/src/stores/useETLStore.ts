@@ -1,10 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/rules-of-hooks */
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { apiService } from '../services/api';
-import { ETLRequest, ETLResponse, TipoETL, TipoEntidade, ETLStatus } from '../types';
+import { executionHistoryService } from '../services/executionHistoryService';
+import { TipoETL, TipoEntidade, ETLStatus } from '../types/domain';
 
-interface ETLExecution {
-  id: string;
+export interface ETLExecution {
+  id: number;
   type: TipoETL;
   entity: TipoEntidade;
   status: ETLStatus;
@@ -14,16 +17,15 @@ interface ETLExecution {
   recordsProcessed?: number;
   recordsWithError?: number;
   errorMessage?: string;
+  endpoint?: string;
+  isSuccess?: boolean;
   result?: any;
 }
 
-interface ETLState {
-  // Estado atual
+export interface ETLState {
   isExecuting: boolean;
-  currentExecution?: ETLExecution;
   executionHistory: ETLExecution[];
-  
-  // Dados de formulário
+
   formData: {
     tipoETL: TipoETL;
     entidade: TipoEntidade;
@@ -32,12 +34,11 @@ interface ETLState {
     pagina: number;
     registrosPorPagina: number;
   };
-  
-  // Estados de UI
+
   loading: boolean;
   error: string | null;
-  
-  // Actions
+  historyLoading: boolean;
+
   setFormData: (data: Partial<ETLState['formData']>) => void;
   executarMovimentos: () => Promise<void>;
   executarCategorias: () => Promise<void>;
@@ -45,12 +46,14 @@ interface ETLState {
   executarIncremental: () => Promise<void>;
   executarTransformacao: () => Promise<void>;
   cancelarETL: (loteId: string) => Promise<void>;
-  // verificarStatus removido - endpoint não existe no backend
   limparErro: () => void;
   resetForm: () => void;
   addToHistory: (execution: ETLExecution) => void;
-  updateCurrentExecution: (updates: Partial<ETLExecution>) => void;
+  loadExecutionHistory: () => Promise<void>;
+  refreshHistory: () => Promise<void>;
 }
+
+export type ETLFormData = ETLState['formData'];
 
 const initialFormData = {
   tipoETL: TipoETL.FULL_LOAD,
@@ -61,50 +64,37 @@ const initialFormData = {
 
 export const useETLStore = create<ETLState>()(devtools(
   (set, get) => ({
-    // Estado inicial
     isExecuting: false,
-    currentExecution: undefined,
     executionHistory: [],
     formData: initialFormData,
     loading: false,
     error: null,
-    
-    // Actions
+    historyLoading: false,
+
     setFormData: (data) => {
       set((state) => ({
         formData: { ...state.formData, ...data }
       }), false, 'setFormData');
     },
-    
+
     executarMovimentos: async () => {
       const state = get();
-      
+
       if (state.isExecuting) {
         throw new Error('Já existe uma execução ETL em andamento');
       }
-      
+
       set({ loading: true, error: null }, false, 'executarMovimentos/start');
-      
+
       try {
-        const response = await apiService.executarMovimentos();
-        
-        const execution: ETLExecution = {
-          id: response.loteId,
-          type: TipoETL.FULL_LOAD,
-          entity: TipoEntidade.MOVIMENTOS,
-          status: ETLStatus.RUNNING,
-          startTime: new Date(),
-          result: response
-        };
-        
+        await apiService.executarMovimentos();
+
         set({
-          isExecuting: true,
-          currentExecution: execution,
+          isExecuting: false,
           loading: false
         }, false, 'executarMovimentos/success');
-        
-        // Polling removido - endpoint de status não existe no backend
-        
+        await get().refreshHistory();
+
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
         set({
@@ -117,33 +107,22 @@ export const useETLStore = create<ETLState>()(devtools(
 
     executarCategorias: async () => {
       const state = get();
-      
+
       if (state.isExecuting) {
         throw new Error('Já existe uma execução ETL em andamento');
       }
-      
+
       set({ loading: true, error: null }, false, 'executarCategorias/start');
-      
+
       try {
-        const response = await apiService.executarCategorias();
-        
-        const execution: ETLExecution = {
-          id: response.loteId,
-          type: TipoETL.FULL_LOAD,
-          entity: TipoEntidade.CATEGORIAS,
-          status: ETLStatus.RUNNING,
-          startTime: new Date(),
-          result: response
-        };
-        
+        await apiService.executarCategorias();
+
         set({
-          isExecuting: true,
-          currentExecution: execution,
+          isExecuting: false,
           loading: false
         }, false, 'executarCategorias/success');
-        
-        // Polling removido - endpoint de status não existe no backend
-        
+        await get().refreshHistory();
+
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
         set({
@@ -155,32 +134,23 @@ export const useETLStore = create<ETLState>()(devtools(
     },
 
     executarFullLoad: async () => {
-      set({ loading: true, error: null }, false, 'executarFullLoad/start');
-      
+      set({ loading: true, isExecuting: true, error: null }, false, 'executarFullLoad/start');
+
       try {
-        const response = await apiService.executarFullLoad();
-        
-        const execution: ETLExecution = {
-          id: response.loteId,
-          type: TipoETL.FULL_LOAD,
-          entity: TipoEntidade.MOVIMENTOS,
-          status: ETLStatus.RUNNING,
-          startTime: new Date(),
-          result: response
-        };
-        
+        await apiService.executarFullLoad();
+
         set({
-          isExecuting: true,
-          currentExecution: execution,
+          isExecuting: false,
           loading: false
         }, false, 'executarFullLoad/success');
-        
-        // Polling removido - endpoint de status não existe no backend
-        
+
+        await get().refreshHistory();
+
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
         set({
           loading: false,
+          isExecuting: false,
           error: errorMessage
         }, false, 'executarFullLoad/error');
         throw error;
@@ -188,32 +158,22 @@ export const useETLStore = create<ETLState>()(devtools(
     },
 
     executarIncremental: async () => {
-      set({ loading: true, error: null }, false, 'executarIncremental/start');
-      
+      set({ loading: true, isExecuting: true, error: null }, false, 'executarIncremental/start');
+
       try {
-        const response = await apiService.executarIncremental();
-        
-        const execution: ETLExecution = {
-          id: response.loteId,
-          type: TipoETL.INCREMENTAL,
-          entity: TipoEntidade.MOVIMENTOS,
-          status: ETLStatus.RUNNING,
-          startTime: new Date(),
-          result: response
-        };
-        
+        await apiService.executarIncremental();
+
         set({
-          isExecuting: true,
-          currentExecution: execution,
+          isExecuting: false,
           loading: false
         }, false, 'executarIncremental/success');
-        
-        // Polling removido - endpoint de status não existe no backend
-        
+        await get().refreshHistory();
+
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
         set({
           loading: false,
+          isExecuting: false,
           error: errorMessage
         }, false, 'executarIncremental/error');
         throw error;
@@ -222,27 +182,18 @@ export const useETLStore = create<ETLState>()(devtools(
 
     executarTransformacao: async () => {
       set({ loading: true, error: null }, false, 'executarTransformacao/start');
-      
+
       try {
-        const response = await apiService.executarTransformacao();
-        
-        const execution: ETLExecution = {
-          id: response.loteId,
-          type: TipoETL.TRANSFORMATION,
-          entity: TipoEntidade.MOVIMENTOS,
-          status: ETLStatus.RUNNING,
-          startTime: new Date(),
-          result: response
-        };
-        
+        await apiService.executarTransformacao();
+
         set({
-          isExecuting: true,
-          currentExecution: execution,
+          isExecuting: false,
           loading: false
         }, false, 'executarTransformacao/success');
-        
-        // Polling removido - endpoint de status não existe no backend
-        
+
+        await get().refreshHistory();
+
+
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
         set({
@@ -252,30 +203,18 @@ export const useETLStore = create<ETLState>()(devtools(
         throw error;
       }
     },
-    
+
     cancelarETL: async (loteId: string) => {
       set({ loading: true, error: null }, false, 'cancelarETL/start');
-      
+
       try {
         await apiService.cancelarETL(loteId);
-        
-        const state = get();
-        if (state.currentExecution?.id === loteId) {
-          const updatedExecution = {
-            ...state.currentExecution,
-            status: ETLStatus.CANCELLED,
-            endTime: new Date()
-          };
-          
-          set({
-            isExecuting: false,
-            currentExecution: undefined,
-            loading: false
-          }, false, 'cancelarETL/success');
-          
-          get().addToHistory(updatedExecution);
-        }
-        
+
+        set({
+          isExecuting: false,
+          loading: false
+        }, false, 'cancelarETL/success');
+
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Erro ao cancelar ETL';
         set({
@@ -285,33 +224,95 @@ export const useETLStore = create<ETLState>()(devtools(
         throw error;
       }
     },
-    
-    // Função verificarStatus removida - endpoint não existe no backend
-    
     limparErro: () => {
       set({ error: null }, false, 'limparErro');
     },
-    
+
     resetForm: () => {
       set({ formData: initialFormData }, false, 'resetForm');
     },
-    
+
+    loadExecutionHistory: async () => {
+      set({ historyLoading: true }, false, 'loadExecutionHistory/start');
+
+      try {
+        const response = await executionHistoryService.getPagedExecutions(1, 50);
+
+
+        const backendExecutions = response.executions || [];
+
+        const calculateDuration = (startTime: string, endTime?: string): number | undefined => {
+          if (!endTime) return undefined;
+          const start = new Date(startTime).getTime();
+          const end = new Date(endTime).getTime();
+          return Math.round((end - start) / 1000);
+        };
+
+        const mapBackendTypeToTipoETL = (backendType: string): TipoETL => {
+          if (backendType === 'Full Load ETL') return TipoETL.FULL_LOAD;
+          if (backendType === 'Incremental ETL') return TipoETL.INCREMENTAL;
+          if (backendType === 'ETL_MovimentosFinanceiros') return TipoETL.FULL_LOAD;
+          return TipoETL.FULL_LOAD;
+        };
+
+        const mapBackendStatusToETLStatus = (backendStatus: string, isSuccess: boolean): ETLStatus => {
+          if (backendStatus === 'Completed' && isSuccess) return ETLStatus.COMPLETED;
+          if (backendStatus === 'Completed' && !isSuccess) return ETLStatus.FAILED;
+          if (backendStatus === 'Running') return ETLStatus.RUNNING;
+          return ETLStatus.PENDING;
+        };
+
+        const frontendExecutions: ETLExecution[] = backendExecutions.map(execution => {
+          const calculatedDuration = calculateDuration(execution.startTime, execution.endTime);
+
+          return {
+            id: execution.id,
+            type: mapBackendTypeToTipoETL(execution.type),
+            entity: TipoEntidade.MOVIMENTOS,
+            status: mapBackendStatusToETLStatus(execution.status, execution.isSuccess),
+            startTime: new Date(execution.startTime),
+            endTime: execution.endTime ? new Date(execution.endTime) : undefined,
+            duration: calculatedDuration,
+            errorMessage: execution.errorMessage,
+            endpoint: execution.endpoint,
+            isSuccess: execution.isSuccess,
+            result: undefined
+          };
+        });
+
+
+        const sortedExecutions = frontendExecutions.sort((a, b) =>
+          new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+        );
+
+
+        set({
+          executionHistory: sortedExecutions,
+          historyLoading: false
+        }, false, 'loadExecutionHistory/success');
+
+      } catch (error) {
+        console.error('❌ Erro ao carregar histórico:', error);
+        set({ historyLoading: false }, false, 'loadExecutionHistory/error');
+      }
+    },
+
+    refreshHistory: async () => {
+      await get().loadExecutionHistory();
+    },
+
     addToHistory: (execution) => {
-      set((state) => ({
-        executionHistory: [execution, ...state.executionHistory].slice(0, 50) // Manter apenas os últimos 50
-      }), false, 'addToHistory');
+      set((state) => {
+        const updatedHistory = [execution, ...state.executionHistory]
+          .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+          .slice(0, 50);
+
+        return {
+          executionHistory: updatedHistory
+        };
+      }, false, 'addToHistory');
     },
-    
-    updateCurrentExecution: (updates) => {
-      set((state) => ({
-        currentExecution: state.currentExecution ? {
-          ...state.currentExecution,
-          ...updates
-        } : undefined
-      }), false, 'updateCurrentExecution');
-    },
-    
-    // Funções de polling removidas - endpoint de status não existe no backend
+
   }),
   {
     name: 'etl-store',
@@ -322,22 +323,20 @@ export const useETLStore = create<ETLState>()(devtools(
   }
 ));
 
-// Selectors para otimização de performance
 export const useETLSelectors = {
   isExecuting: () => useETLStore((state) => state.isExecuting),
-  currentExecution: () => useETLStore((state) => state.currentExecution),
   executionHistory: () => useETLStore((state) => state.executionHistory),
   formData: () => useETLStore((state) => state.formData),
   loading: () => useETLStore((state) => state.loading),
   error: () => useETLStore((state) => state.error),
-  
-  // Selectors computados
+  historyLoading: () => useETLStore((state) => state.historyLoading),
+
   canExecute: () => useETLStore((state) => !state.isExecuting && !state.loading),
   lastExecution: () => useETLStore((state) => state.executionHistory[0]),
-  successfulExecutions: () => useETLStore((state) => 
+  successfulExecutions: () => useETLStore((state) =>
     state.executionHistory.filter(exec => exec.status === ETLStatus.COMPLETED)
   ),
-  failedExecutions: () => useETLStore((state) => 
+  failedExecutions: () => useETLStore((state) =>
     state.executionHistory.filter(exec => exec.status === ETLStatus.FAILED)
   )
 };

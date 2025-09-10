@@ -16,7 +16,6 @@ export interface CustomEvent<T = any> {
   timestamp: Date;
 }
 
-// Tipos para hooks
 export interface UseAsyncState<T> {
   data: T | null;
   loading: boolean;
@@ -38,7 +37,6 @@ export interface UsePaginationResult {
   setPageSize: (size: number) => void;
 }
 
-// Tipos para validação
 export interface ValidationRule {
   required?: boolean;
   min?: number;
@@ -52,7 +50,6 @@ export interface ValidationResult {
   errors: string[];
 }
 
-// Tipos para formatação
 export interface FormatOptions {
   currency?: {
     locale: string;
@@ -67,4 +64,94 @@ export interface FormatOptions {
     thousandsSeparator: string;
     decimalSeparator: string;
   };
+}
+
+export interface Batch {
+  id: number;
+  batchId: string;
+  tipoExecucao: string;
+  entidade: string;
+  dataInicio: string;
+  dataFim: string;
+  status: string;
+  totalRegistrosLidos: number;
+  totalRegistrosProcessados: number;
+  totalRegistrosInseridos: number;
+  totalRegistrosAtualizados: number;
+  totalRegistrosComErro: number;
+  throughputRegistrosPorSegundo: number | null;
+  latenciaMediaMs: number | null;
+  mensagemErro: string | null;
+  duracao: string;
+  percentualSucesso: number | null;
+}
+
+export interface BatchItem {
+  id: number;
+  itemId: string;
+  tipoItem: string;
+  pagina: number;
+  posicaoNaPagina: number;
+  dataInicio: string;
+  dataFim: string;
+  status: string;
+  operacao: string;
+  numeroTentativas: number;
+  duracaoMs: number;
+  mensagemErro: string | null;
+}
+
+export interface BatchesResponse {
+  items: Batch[];
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface BatchItemsResponse {
+  items: BatchItem[];
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface BatchFilters {
+  status?: string;
+  entidade?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface BatchItemFilters {
+  status?: string;
+  operacao?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface MetricasDetalhadasDto {
+  entidade: string;
+  totalExecucoes: number;
+  sucessos: number;
+  falhas: number;
+  percentualSucesso: number;
+  tempoMedioExecucao: number;
+  throughputMedio: number;
+  ultimaExecucao: string;
+}
+
+export interface AlertaPerformanceDto {
+  id: string;
+  tipo: string;
+  severidade: 'Low' | 'Medium' | 'High' | 'Critical';
+  mensagem: string;
+  entidade: string;
+  dataOcorrencia: string;
+  resolvido: boolean;
 }

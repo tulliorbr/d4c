@@ -17,9 +17,6 @@ public class RelatoriosController : ControllerBase
     _logger = logger;
   }
 
-  /// <summary>
-  /// Obtém KPIs do período (Entradas, Saídas, Saldo, % Recebido/Pago)
-  /// </summary>
   [HttpGet("kpis")]
   public async Task<ActionResult<KPIsResponse>> ObterKPIs([FromQuery] RelatorioRequest request, CancellationToken cancellationToken = default)
   {
@@ -35,9 +32,6 @@ public class RelatoriosController : ControllerBase
     }
   }
 
-  /// <summary>
-  /// Obtém dados para gráfico de linha/área (Entradas x Saídas por mês) - Apache ECharts
-  /// </summary>
   [HttpGet("grafico/linha")]
   public async Task<ActionResult<GraficoLinhaResponse>> ObterGraficoLinha([FromQuery] RelatorioRequest request, CancellationToken cancellationToken = default)
   {
@@ -53,9 +47,6 @@ public class RelatoriosController : ControllerBase
     }
   }
 
-  /// <summary>
-  /// Obtém dados para gráfico de barras (Top 5 Categorias por valor) - Apache ECharts
-  /// </summary>
   [HttpGet("grafico/barras")]
   public async Task<ActionResult<GraficoBarrasResponse>> ObterGraficoBarras([FromQuery] RelatorioRequest request, CancellationToken cancellationToken = default)
   {
@@ -71,9 +62,6 @@ public class RelatoriosController : ControllerBase
     }
   }
 
-  /// <summary>
-  /// Obtém dados para gráfico de pizza/rosca (Distribuição por Status) - Apache ECharts
-  /// </summary>
   [HttpGet("grafico/pizza")]
   public async Task<ActionResult<GraficoPizzaResponse>> ObterGraficoPizza([FromQuery] RelatorioRequest request, CancellationToken cancellationToken = default)
   {
@@ -89,9 +77,6 @@ public class RelatoriosController : ControllerBase
     }
   }
 
-  /// <summary>
-  /// Obtém tabela de movimentos com filtros e paginação
-  /// </summary>
   [HttpGet("tabela")]
   public async Task<ActionResult<TabelaMovimentosResponse>> ObterTabelaMovimentos([FromQuery] TabelaMovimentosRequest request, CancellationToken cancellationToken = default)
   {

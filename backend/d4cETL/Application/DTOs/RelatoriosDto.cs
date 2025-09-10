@@ -31,6 +31,7 @@ public class GraficoBarrasResponse
 public class CategoriaValor
 {
   public string Nome { get; set; } = string.Empty;
+  public string Descricao { get; set; } = string.Empty;
   public decimal Valor { get; set; }
   public string Natureza { get; set; } = string.Empty;
 }
@@ -79,6 +80,7 @@ public class MovimentoResumo
   public string CNatureza { get; set; } = string.Empty;
   public string? CStatus { get; set; }
   public string? CCodCateg { get; set; }
+  public string? DescricaoCategoria { get; set; }
   public decimal NValorTitulo { get; set; }
   public string? CCPFCNPJCliente { get; set; }
 }
@@ -89,6 +91,6 @@ public class RelatorioRequest
   public DateTime? DataFim { get; set; }
   public string? Natureza { get; set; }
 
-  public DateTime DataInicioEfetiva => DataInicio ?? DateTime.Now.AddMonths(-12);
+  public DateTime DataInicioEfetiva => DataInicio ?? DateTime.Now.AddMonths(-24);
   public DateTime DataFimEfetiva => DataFim ?? DateTime.Now;
 }

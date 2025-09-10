@@ -1,4 +1,3 @@
-// Tipos para ETL
 export interface ExecutarMovimentosRequest {
   pagina: number;
   registrosPorPagina: number;
@@ -42,18 +41,24 @@ export interface CategoriasResponse {
   totalDeRegistros: number;
 }
 
-// Tipos para Observabilidade
 export interface ETLBatchResumoDto {
-  id: string;
-  tipoEntidade: string;
-  status: string;
+  id: number;
+  batchId: string;
+  tipoExecucao: string;
+  entidade: string;
   dataInicio: string;
   dataFim?: string;
-  totalItens: number;
-  itensProcessados: number;
-  itensComErro: number;
-  duracaoMs?: number;
-  correlationId: string;
+  status: string;
+  totalRegistrosLidos: number;
+  totalRegistrosProcessados: number;
+  totalRegistrosInseridos: number;
+  totalRegistrosAtualizados: number;
+  totalRegistrosComErro: number;
+  throughputRegistrosPorSegundo?: number;
+  latenciaMediaMs?: number;
+  mensagemErro?: string;
+  duracao?: string;
+  percentualSucesso?: number;
 }
 
 export interface ETLBatchDetalheDto {
@@ -83,22 +88,61 @@ export interface ETLItemDto {
 }
 
 export interface ETLMetricsDto {
-  id: string;
-  batchId: string;
-  tipoEntidade: string;
-  registrosLidos: number;
-  registrosProcessados: number;
-  registrosComErro: number;
-  throughputPorSegundo: number;
-  latenciaMediaMs: number;
-  dataExecucao: string;
-  duracaoTotalMs: number;
+  entidade: string;
+  ultimaExecucao: string;
+  statusUltimaExecucao: string;
+  registrosLidosUltimaExecucao: number;
+  registrosProcessadosUltimaExecucao: number;
+  registrosComErroUltimaExecucao: number;
+  throughputMedio: number;
+  latenciaMedia: number;
+  totalExecucoes: number;
+  taxaSucessoMedia: number;
 }
 
-// Tipos para Relatórios
+export interface MetricasDetalhadasDto {
+  metricasAtuais: ETLMetricsDto[];
+  tendenciasHistoricas: TendenciaMetricaDto[];
+  alertas: AlertaPerformanceDto[];
+  resumoGeral: ResumoPerformanceDto;
+}
+
+export interface TendenciaMetricaDto {
+  entidade: string;
+  data: string;
+  throughputMedio: number;
+  latenciaMedia: number;
+  taxaSucesso: number;
+  totalExecucoes: number;
+}
+
+export interface AlertaPerformanceDto {
+  id: string;
+  entidade: string;
+  tipo: string;
+  severidade: string;
+  mensagem: string;
+  valorAtual: number;
+  limiteEsperado: number;
+  dataDeteccao: string;
+  ativo: boolean;
+}
+
+export interface ResumoPerformanceDto {
+  totalEntidades: number;
+  entidadesComAlertas: number;
+  throughputMedioGeral: number;
+  latenciaMediaGeral: number;
+  taxaSucessoGeral: number;
+  tendenciaThroughput: number;
+  tendenciaLatencia: number;
+  tendenciaTaxaSucesso: number;
+  ultimaAtualizacao: string;
+}
+
 export interface KPIData {
-  entradas: number;
-  saidas: number;
+  totalEntradas: number;
+  totalSaidas: number;
   saldoPeriodo: number;
   percentualRecebido: number;
   percentualPago: number;
@@ -122,7 +166,6 @@ export interface StatusDistribution {
   valor: number;
 }
 
-// Interface para movimento financeiro baseada na resposta real da API
 export interface MovimentoFinanceiro {
   nCodTitulo: number;
   cCodIntTitulo: string | null;
@@ -136,7 +179,6 @@ export interface MovimentoFinanceiro {
   ccpfcnpjCliente: string;
 }
 
-// Interface para resposta da API de tabela de relatórios
 export interface MovimentosFinanceirosResponse {
   movimentos: MovimentoFinanceiro[];
   totalRegistros: number;
@@ -144,16 +186,25 @@ export interface MovimentosFinanceirosResponse {
   paginaAtual: number;
 }
 
-// Manter interface antiga para compatibilidade
+export interface TabelaMovimentosResponse {
+  movimentos: MovimentoResumo[];
+  totalRegistros: number;
+  totalPaginas: number;
+  paginaAtual: number;
+}
+
 export interface MovimentoResumo {
   nCodTitulo: number;
-  cNumTitulo: string;
-  dDtVencto: string;
-  dDtEmissao: string;
-  nValorTitulo: number;
+  cCodIntTitulo?: string;
+  dDtEmissao?: string;
+  dDtVenc?: string;
+  dDtPagamento?: string;
   cNatureza: string;
-  cStatus: string;
-  cDescricaoCategoria: string;
+  cStatus?: string;
+  cCodCateg?: string;
+  descricaoCategoria?: string;
+  nValorTitulo: number;
+  ccpfcnpjCliente?: string;
 }
 
 export interface MovimentosResumoResponse {
@@ -163,7 +214,6 @@ export interface MovimentosResumoResponse {
   paginaAtual: number;
 }
 
-// Tipos para filtros
 export interface FiltroRelatorio {
   dataInicio?: string;
   dataFim?: string;
@@ -174,7 +224,6 @@ export interface FiltroRelatorio {
   registrosPorPagina?: number;
 }
 
-// Tipos de resposta da API
 export interface ApiResponse<T> {
   data: T;
   success: boolean;
@@ -189,13 +238,11 @@ export interface PaginatedResponse<T> {
   pageSize: number;
 }
 
-// Tipos para estados de loading
 export interface LoadingState {
   isLoading: boolean;
   error?: string;
 }
 
-// Tipos para execução de ETL
 export interface ETLExecutionResult {
   success: boolean;
   message: string;
@@ -204,7 +251,6 @@ export interface ETLExecutionResult {
   errors?: string[];
 }
 
-// Tipos para métricas do sistema
 export interface SystemMetrics {
   performance: {
     throughputMedio: number;

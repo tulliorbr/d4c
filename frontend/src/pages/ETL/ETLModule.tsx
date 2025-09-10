@@ -1,44 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Play,
-  RefreshCw,
-  Calendar,
-  Database,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Activity,
-  Download,
-} from "lucide-react";
+import { Play, RefreshCw, Calendar, Database, Clock } from "lucide-react";
 import { useETLStore } from "../../stores/useETLStore";
 import { LoadingSpinner, ErrorDisplay } from "../../components/Common";
 import { TipoETL } from "../../types/domain";
+import { formatDate } from "../../utils/formatters";
 
 const ETLModule: React.FC = () => {
   const {
     executionHistory,
-    loading: isLoading,
+    historyLoading,
+    isExecuting,
     error,
-    currentExecution,
     executarFullLoad,
     executarIncremental,
     limparErro,
+    loadExecutionHistory,
   } = useETLStore();
 
   const [selectedType, setSelectedType] = useState<TipoETL>(TipoETL.FULL_LOAD);
-  const [isExecuting, setIsExecuting] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
 
   useEffect(() => {
-    // Clear any previous errors on mount
     limparErro();
-  }, [limparErro]);
+    loadExecutionHistory();
+  }, [limparErro, loadExecutionHistory]);
+
 
   const handleExecuteETL = async () => {
     try {
-      setIsExecuting(true);
       if (selectedType === TipoETL.FULL_LOAD) {
         await executarFullLoad();
       } else if (selectedType === TipoETL.INCREMENTAL) {
@@ -46,48 +36,6 @@ const ETLModule: React.FC = () => {
       }
     } catch (err) {
       console.error("Erro ao executar ETL:", err);
-    } finally {
-      setIsExecuting(false);
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    const normalizedStatus = status?.toLowerCase();
-    switch (normalizedStatus) {
-      case "concluído":
-      case "completed":
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case "falhou":
-      case "failed":
-        return <XCircle className="w-5 h-5 text-red-500" />;
-      case "executando":
-      case "running":
-        return <Activity className="w-5 h-5 text-blue-500 animate-pulse" />;
-      case "pendente":
-      case "pending":
-        return <Clock className="w-5 h-5 text-yellow-500" />;
-      default:
-        return <AlertCircle className="w-5 h-5 text-muted-foreground" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    const normalizedStatus = status?.toLowerCase();
-    switch (normalizedStatus) {
-      case "concluído":
-      case "completed":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "falhou":
-      case "failed":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "executando":
-      case "running":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "pendente":
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      default:
-        return "bg-muted text-muted-foreground border-border";
     }
   };
 
@@ -96,12 +44,6 @@ const ETLModule: React.FC = () => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}m ${remainingSeconds}s`;
-  };
-
-  const formatDate = (dateString: string | Date) => {
-    const date =
-      typeof dateString === "string" ? new Date(dateString) : dateString;
-    return date.toLocaleString("pt-BR");
   };
 
   if (error) {
@@ -122,7 +64,6 @@ const ETLModule: React.FC = () => {
       exit={{ opacity: 0, y: -20 }}
       className="p-6 space-y-6"
     >
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
@@ -143,14 +84,12 @@ const ETLModule: React.FC = () => {
         </motion.button>
       </div>
 
-      {/* ETL Execution Panel */}
       <div className="bg-card rounded-xl shadow-lg p-6 border border-border">
         <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
           <Database className="w-5 h-5" />
           Executar ETL
         </h2>
 
-        {/* ETL Type Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <motion.div
             whileHover={{ scale: 1.02 }}
@@ -203,7 +142,7 @@ const ETLModule: React.FC = () => {
               />
               <div>
                 <h3 className="font-semibold text-foreground">Incremental</h3>
-              <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Baseado em data de alteração (checkpoint por entidade)
                 </p>
               </div>
@@ -215,19 +154,20 @@ const ETLModule: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* Execute Button */}
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleExecuteETL}
-          disabled={isExecuting || isLoading}
+          disabled={isExecuting}
           className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-primary hover:bg-primary/90 disabled:bg-muted text-primary-foreground font-semibold rounded-lg transition-colors"
         >
-          {isExecuting || isLoading ? (
-            <LoadingSpinner size="sm" color="white" />
-          ) : (
-            <Play className="w-5 h-5" />
-          )}
+          <div className="w-5 h-5 flex items-center justify-center">
+            {isExecuting ? (
+              <LoadingSpinner size="sm" color="white" />
+            ) : (
+              <Play className="w-5 h-5" />
+            )}
+          </div>
           {isExecuting
             ? "Executando..."
             : `Executar ETL ${
@@ -236,66 +176,6 @@ const ETLModule: React.FC = () => {
         </motion.button>
       </div>
 
-      {/* Current Execution Status */}
-      <AnimatePresence>
-        {currentExecution && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-card rounded-xl shadow-lg p-6 border border-border"
-          >
-            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Activity className="w-5 h-5" />
-              Execução Atual
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3">
-                {getStatusIcon(currentExecution.status)}
-                <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <p
-                    className={`px-2 py-1 rounded text-sm font-medium border ${getStatusColor(
-                      currentExecution.status
-                    )}`}
-                  >
-                    {currentExecution.status || "Desconhecido"}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm text-muted-foreground">Tipo</p>
-            <p className="font-semibold text-foreground">
-                  {currentExecution.type === TipoETL.FULL_LOAD
-                    ? "Full Load"
-                    : "Incremental"}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm text-muted-foreground">Duração</p>
-            <p className="font-semibold text-foreground">
-                  {currentExecution.duration
-                    ? formatDuration(currentExecution.duration)
-                    : "Em andamento..."}
-                </p>
-              </div>
-            </div>
-
-            {currentExecution.errorMessage && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-800">
-                  <strong>Erro:</strong> {currentExecution.errorMessage}
-                </p>
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Execution History */}
       <AnimatePresence>
         {showHistory && (
           <motion.div
@@ -304,77 +184,107 @@ const ETLModule: React.FC = () => {
             exit={{ opacity: 0, height: 0 }}
             className="bg-card rounded-xl shadow-lg border border-border"
           >
-            <div className="p-6 border-b border-border">
-              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <Clock className="w-5 h-5" />
+            <div className="p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Clock className="w-4 h-4" />
                 Histórico de Execuções
               </h2>
             </div>
 
-            <div className="p-6">
-              {isLoading ? (
+            <div className="p-4">
+              {historyLoading ? (
                 <div className="flex justify-center py-8">
                   <LoadingSpinner size="md" text="Carregando histórico..." />
                 </div>
               ) : executionHistory.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-          <Database className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <Database className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
                   <p>Nenhuma execução encontrada</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {executionHistory.map((execution) => (
-                    <motion.div
-                      key={execution.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        {getStatusIcon(execution.status)}
-                        <div>
-                          <p className="font-semibold text-foreground">
-                            ETL{" "}
-                            {execution.type === TipoETL.FULL_LOAD
-                              ? "Full Load"
-                              : "Incremental"}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatDate(execution.startTime)}
-                          </p>
-                        </div>
-                      </div>
+                <div className="space-y-2">
+                  {executionHistory
+                    .sort(
+                      (a, b) =>
+                        new Date(b.startTime).getTime() -
+                        new Date(a.startTime).getTime()
+                    )
+                    .map((execution) => (
+                      <motion.div
+                        key={execution.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                      >
+                        <div className="flex items-center justify-between p-3 border-b border-border">
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium text-foreground">
+                              {execution.type === TipoETL.FULL_LOAD
+                                ? "Full Load"
+                                : "Incremental"}
+                            </div>
+                            {execution.endpoint && (
+                              <div className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded">
+                                {execution.endpoint.replace("/api/ETL/", "")}
+                              </div>
+                            )}
+                          </div>
 
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p
-                            className={`px-2 py-1 rounded text-sm font-medium border ${getStatusColor(
-                              execution.status
-                            )}`}
-                          >
-                            {execution.status || "Desconhecido"}
-                          </p>
-                          {execution.duration && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {formatDuration(execution.duration)}
-                            </p>
+                          {execution.isSuccess !== undefined && (
+                            <div
+                              className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                                execution.isSuccess
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              <div
+                                className={`w-2 h-2 rounded-full ${
+                                  execution.isSuccess
+                                    ? "bg-green-500"
+                                    : "bg-red-500"
+                                }`}
+                              ></div>
+                              {execution.isSuccess ? "Sucesso" : "Falha"}
+                            </div>
                           )}
                         </div>
 
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() =>
-                            console.log("Ver detalhes:", execution.id)
-                          }
-                          className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                          title="Ver detalhes"
-                        >
-                          <Download className="w-4 h-4" />
-                        </motion.button>
-                      </div>
-                    </motion.div>
-                  ))}
+                        <div className="p-3">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <div className="flex items-center gap-3">
+                              <span>{formatDate(execution.startTime)}</span>
+                              <span>•</span>
+                              <span>
+                                {execution.duration !== undefined &&
+                                execution.duration !== null
+                                  ? formatDuration(execution.duration)
+                                  : !execution.duration &&
+                                    execution.startTime &&
+                                    execution.endTime
+                                  ? formatDuration(
+                                      Math.round(
+                                        (execution.endTime.getTime() -
+                                          execution.startTime.getTime()) /
+                                          1000
+                                      )
+                                    )
+                                  : "Em andamento..."}
+                              </span>
+                            </div>
+                            <span className="text-xs">
+                              {execution.status || "Desconhecido"}
+                            </span>
+                          </div>
+
+                          {execution.errorMessage && (
+                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                              {execution.errorMessage}
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
                 </div>
               )}
             </div>
