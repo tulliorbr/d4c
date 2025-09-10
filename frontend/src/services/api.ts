@@ -245,17 +245,10 @@ class ApiService {
     startDate?: string;
     endDate?: string;
   }): Promise<any> {
-    if (params?.page || params?.pageSize) {
-      const response = await this.api.get('/executions/history/paged', { params });
-      return {
-        executions: response.data.data,
-        ...response.data.pagination
-      };
-    }
-
-    const response = await this.api.get('/executions/history', { params });
+    const response = await this.api.get('/executions/history/paged', { params });
     return {
-      executions: response.data
+      executions: response.data.data,
+      ...response.data.pagination
     };
   }
 

@@ -38,30 +38,6 @@ class ExecutionHistoryService {
     return response;
   }
 
-  async getAllExecutions(): Promise<ExecutionHistory[]> {
-    const response = await apiService.obterHistoricoExecucoes();
-    return response.executions || [];
-  }
-
-  async getRecentExecutions(): Promise<ExecutionHistory[]> {
-    const response = await apiService.obterHistoricoExecucoes({ pageSize: 10 });
-    return response.executions || [];
-  }
-
-  async getExecutionById(id: string): Promise<ExecutionHistory> {
-    const response = await apiService.obterHistoricoExecucoes();
-    const execution = response.executions?.find((exec: ExecutionHistory) => exec.id.toString() === id);
-    if (!execution) {
-      throw new Error(`Execução com ID ${id} não encontrada`);
-    }
-    return execution;
-  }
-
-  async getExecutionsByType(type: string): Promise<ExecutionHistory[]> {
-    const response = await apiService.obterHistoricoExecucoes({ type });
-    return response.executions || [];
-  }
-
   async getExecutionStats(): Promise<{
     total: number;
     successful: number;
@@ -69,7 +45,8 @@ class ExecutionHistoryService {
     running: number;
     successRate: number;
   }> {
-    const executions = await this.getAllExecutions();
+    const response = await this.getPagedExecutions(1, 1000); // Get a large page to calculate stats
+    const executions = response.executions || [];
 
     const total = executions.length;
     const successful = executions.filter(e => e.status === 'Concluído').length;

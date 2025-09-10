@@ -437,7 +437,7 @@ public class ObservabilidadeService : IObservabilidadeService
     return await GerarAlertasAsync(metricasAtuais, tendenciasHistoricas);
   }
 
-  private async Task<List<AlertaPerformanceDto>> GerarAlertasAsync(List<ETLMetricsDto> metricasAtuais, List<TendenciaMetricaDto> tendenciasHistoricas)
+  private Task<List<AlertaPerformanceDto>> GerarAlertasAsync(List<ETLMetricsDto> metricasAtuais, List<TendenciaMetricaDto> tendenciasHistoricas)
   {
     var alertas = new List<AlertaPerformanceDto>();
 
@@ -494,7 +494,7 @@ public class ObservabilidadeService : IObservabilidadeService
       }
     }
 
-    return alertas;
+    return Task.FromResult(alertas);
   }
 
   private ResumoPerformanceDto CalcularResumoPerformance(List<ETLMetricsDto> metricasAtuais, List<TendenciaMetricaDto> tendenciasHistoricas)

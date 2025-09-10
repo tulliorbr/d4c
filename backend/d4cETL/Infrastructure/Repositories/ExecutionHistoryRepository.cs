@@ -15,33 +15,10 @@ public class ExecutionHistoryRepository : IExecutionHistoryRepository
     _context = context;
   }
 
-  public async Task<IEnumerable<ExecutionHistory>> GetAllAsync()
-  {
-    return await _context.ExecutionHistories
-        .OrderByDescending(x => x.StartTime)
-        .ToListAsync();
-  }
-
   public async Task<ExecutionHistory?> GetByIdAsync(int id)
   {
     return await _context.ExecutionHistories
         .FirstOrDefaultAsync(x => x.Id == id);
-  }
-
-  public async Task<IEnumerable<ExecutionHistory>> GetByTypeAsync(string type)
-  {
-    return await _context.ExecutionHistories
-        .Where(x => x.Type == type)
-        .OrderByDescending(x => x.StartTime)
-        .ToListAsync();
-  }
-
-  public async Task<IEnumerable<ExecutionHistory>> GetRecentAsync(int count = 10)
-  {
-    return await _context.ExecutionHistories
-        .OrderByDescending(x => x.StartTime)
-        .Take(count)
-        .ToListAsync();
   }
 
   public async Task<ExecutionHistory> AddAsync(ExecutionHistory executionHistory)

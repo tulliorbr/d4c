@@ -14,20 +14,6 @@ public class ExecutionHistoryController : ControllerBase
     _executionHistoryService = executionHistoryService;
   }
 
-  [HttpGet("history")]
-  public async Task<IActionResult> GetExecutionHistory()
-  {
-    try
-    {
-      var executions = await _executionHistoryService.GetAllExecutionsAsync();
-      return Ok(executions);
-    }
-    catch (Exception ex)
-    {
-      return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
-    }
-  }
-
   [HttpGet("history/paged")]
   public async Task<IActionResult> GetPagedExecutionHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
   {
@@ -53,52 +39,4 @@ public class ExecutionHistoryController : ControllerBase
       return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
     }
   }
-
-  [HttpGet("history/recent")]
-  public async Task<IActionResult> GetRecentExecutions([FromQuery] int count = 10)
-  {
-    try
-    {
-      var executions = await _executionHistoryService.GetRecentExecutionsAsync(count);
-      return Ok(executions);
-    }
-    catch (Exception ex)
-    {
-      return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
-    }
-  }
-
-  [HttpGet("history/{id}")]
-  public async Task<IActionResult> GetExecutionById(int id)
-  {
-    try
-    {
-      var execution = await _executionHistoryService.GetExecutionByIdAsync(id);
-      if (execution == null)
-      {
-        return NotFound(new { message = "Execução não encontrada" });
-      }
-      return Ok(execution);
-    }
-    catch (Exception ex)
-    {
-      return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
-    }
-  }
-
-  [HttpGet("history/type/{type}")]
-  public async Task<IActionResult> GetExecutionsByType(string type)
-  {
-    try
-    {
-      var executions = await _executionHistoryService.GetExecutionsByTypeAsync(type);
-      return Ok(executions);
-    }
-    catch (Exception ex)
-    {
-      return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
-    }
-  }
-
-
 }

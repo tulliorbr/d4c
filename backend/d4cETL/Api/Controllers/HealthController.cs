@@ -62,35 +62,4 @@ public class HealthController : ControllerBase
       return StatusCode(503, errorResponse);
     }
   }
-
-  [HttpGet("database")]
-  [ProducesResponseType(typeof(ComponentHealth), 200)]
-  [ProducesResponseType(typeof(ComponentHealth), 503)]
-  public async Task<ActionResult<ComponentHealth>> GetDatabaseHealth()
-  {
-    try
-    {
-      var databaseHealth = await _healthCheckService.CheckDatabaseHealthAsync();
-
-      if (databaseHealth.Status == HealthStatus.Unhealthy)
-      {
-        return StatusCode(503, databaseHealth);
-      }
-
-      return Ok(databaseHealth);
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, "Erro ao verificar saúde do banco de dados");
-
-      var errorResponse = new ComponentHealth
-      {
-        Status = HealthStatus.Unhealthy,
-        Description = "Erro interno ao verificar banco de dados",
-        ResponseTimeMs = 0
-      };
-
-      return StatusCode(503, errorResponse);
-    }
-  }
 }
