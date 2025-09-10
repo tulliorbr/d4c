@@ -12,7 +12,7 @@ Este projeto consiste em uma aplicação ETL (Extract, Transform, Load) com back
 ### Frontend
 
 - Node.js (versão 18 ou superior)
-- npm, yarn ou pnpm
+- npm
 
 ## 🚀 Como executar o projeto
 
