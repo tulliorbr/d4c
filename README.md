@@ -18,19 +18,19 @@ Este projeto consiste em uma aplicação ETL (Extract, Transform, Load) com back
 
 ### 1. Backend (.NET) Configuração inicial
 
-1. 1. Navegue até a pasta do backend:
+1.  Navegue até a pasta do backend:
 
 ```
 cd backend/d4cETL
 ```
 
-2. 1. Restaure as dependências:
+2.  Restaure as dependências:
 
 ```
 dotnet restore
 ```
 
-4. 1. Execute as migrações do banco de dados:
+4.  Execute as migrações do banco de dados:
 
 ````
 dotnet ef database update
