@@ -7,7 +7,7 @@ Este projeto consiste em uma aplicação ETL (Extract, Transform, Load) com back
 ### Backend
 
 - .NET 9 SDK
-- SQL Server ou SQL Server Express
+- SQLite
 
 ### Frontend
 
