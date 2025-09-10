@@ -41,10 +41,9 @@ Executar o backend
 dotnet run
 ````
 O backend estará disponível em:
-
-- HTTP : http://localhost:5000
-- HTTPS : https://localhost:5131
-- Swagger : https://localhost:5131/swagger
+- HTTP : http://localhost:5131
+- Swagger : http://localhost:5131/swagger
+  
 ### 2. Frontend (React) Configuração inicial
 1. 1.
    Navegue até a pasta do frontend:
