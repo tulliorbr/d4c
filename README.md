@@ -45,14 +45,14 @@ O backend estará disponível em:
 - Swagger : http://localhost:5131/swagger
   
 ### 2. Frontend (React) Configuração inicial
-1. 1.
+1. 
    Navegue até a pasta do frontend:
 ```
 
 cd frontend
 
 ```
-2. 1.
+2. 
    Instale as dependências:
 ```
 
@@ -65,7 +65,8 @@ Ou se preferir usar pnpm:
 
 pnpm install
 
-```Executar o frontend
+````
+Executar o frontend
 
 ```
 
@@ -127,8 +128,8 @@ Definições TypeScript
 ```
 ## 🌐 URLs importantes
 - Frontend : http://localhost:5173
-- Backend API : https://localhost:5131
-- Swagger/OpenAPI : https://localhost:5131/swagger
+- Backend API : http://localhost:5131
+- Swagger/OpenAPI : http://localhost:5131/swagger
 ## 🛠️ Desenvolvimento
 ### Executar ambos simultaneamente
 1. 1.
