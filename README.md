@@ -34,12 +34,12 @@ dotnet restore
 
 ````
 dotnet ef database update
-``` Executar o backend
 ````
 
+Executar o backend
+````
 dotnet run
-
-```
+````
 O backend estará disponível em:
 
 - HTTP : http://localhost:5000
